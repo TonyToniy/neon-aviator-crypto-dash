@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Plane, TrendingUp, TrendingDown } from 'lucide-react';
+import { Plane, TrendingUp, TrendingDown, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface AviatorGameProps {
@@ -8,13 +8,17 @@ interface AviatorGameProps {
   onGameEnd: (crashed: boolean, finalMultiplier: number) => void;
   isPlaying: boolean;
   onGameStart: () => void;
+  isDemoMode?: boolean;
+  onDemoStart?: () => void;
 }
 
 const AviatorGame: React.FC<AviatorGameProps> = ({
   onMultiplierChange,
   onGameEnd,
   isPlaying,
-  onGameStart
+  onGameStart,
+  isDemoMode = false,
+  onDemoStart
 }) => {
   const [multiplier, setMultiplier] = useState(1.0);
   const [gameState, setGameState] = useState<'waiting' | 'flying' | 'crashed'>('waiting');
@@ -35,9 +39,14 @@ const AviatorGame: React.FC<AviatorGameProps> = ({
     setCrashPoint(newCrashPoint);
     setMultiplier(1.0);
     setGameState('flying');
-    onGameStart();
+    
+    if (isDemoMode && onDemoStart) {
+      onDemoStart();
+    } else {
+      onGameStart();
+    }
 
-    console.log(`Game started! Crash point: ${newCrashPoint.toFixed(2)}x`);
+    console.log(`${isDemoMode ? 'Demo' : 'Real'} game started! Crash point: ${newCrashPoint.toFixed(2)}x`);
 
     intervalRef.current = setInterval(() => {
       setMultiplier(prev => {
@@ -96,6 +105,13 @@ const AviatorGame: React.FC<AviatorGameProps> = ({
       ref={gameRef}
       className="relative h-64 w-full bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900 rounded-xl overflow-hidden border border-neon-blue/30"
     >
+      {/* Demo mode indicator */}
+      {isDemoMode && (
+        <div className="absolute top-2 right-2 z-20 bg-gradient-to-r from-orange-500 to-yellow-500 text-white px-2 py-1 rounded-full text-xs font-bold">
+          DEMO
+        </div>
+      )}
+
       {/* Animated background grid */}
       <div className="absolute inset-0 bg-cyber-grid bg-grid opacity-20"></div>
       
@@ -137,7 +153,9 @@ const AviatorGame: React.FC<AviatorGameProps> = ({
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="text-center animate-pulse">
             <TrendingDown size={32} className="text-red-500 mx-auto mb-2" />
-            <div className="text-lg font-bold text-red-500">CRASHED!</div>
+            <div className="text-lg font-bold text-red-500">
+              {isDemoMode ? 'DEMO CRASHED!' : 'CRASHED!'}
+            </div>
             <div className="text-sm text-red-400 mt-1">
               at {multiplier.toFixed(2)}x
             </div>
@@ -150,18 +168,29 @@ const AviatorGame: React.FC<AviatorGameProps> = ({
         {gameState === 'waiting' && (
           <Button
             onClick={startGame}
-            className="bg-gradient-to-r from-neon-blue to-neon-purple hover:from-neon-purple hover:to-neon-pink text-white font-bold py-1 px-3 rounded-lg neon-glow transition-all duration-300 hover:scale-105 text-xs"
+            className={`${
+              isDemoMode 
+                ? 'bg-gradient-to-r from-orange-500 to-yellow-500 hover:from-yellow-500 hover:to-orange-500' 
+                : 'bg-gradient-to-r from-neon-blue to-neon-purple hover:from-neon-purple hover:to-neon-pink'
+            } text-white font-bold py-1 px-3 rounded-lg neon-glow transition-all duration-300 hover:scale-105 text-xs`}
           >
-            START FLIGHT
+            {isDemoMode ? (
+              <>
+                <Play className="w-3 h-3 mr-1" />
+                DEMO FLIGHT
+              </>
+            ) : (
+              'START FLIGHT'
+            )}
           </Button>
         )}
         
-        {gameState === 'flying' && isPlaying && (
+        {gameState === 'flying' && (isPlaying || isDemoMode) && (
           <Button
             onClick={stopGame}
             className="bg-gradient-to-r from-neon-green to-emerald-500 hover:from-emerald-500 hover:to-neon-green text-white font-bold py-1 px-3 rounded-lg neon-glow transition-all duration-300 hover:scale-105 text-xs"
           >
-            CASH OUT {multiplier.toFixed(2)}x
+            {isDemoMode ? `DEMO CASH OUT ${multiplier.toFixed(2)}x` : `CASH OUT ${multiplier.toFixed(2)}x`}
           </Button>
         )}
       </div>

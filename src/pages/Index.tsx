@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Plane, Zap, Coins, LogOut, Settings } from 'lucide-react';
@@ -39,6 +38,7 @@ const Index = () => {
   const [totalWon, setTotalWon] = useState(0);
   const [showDeposit, setShowDeposit] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [isDemoMode, setIsDemoMode] = useState(false);
   const { toast } = useToast();
 
   // Fetch user balance from database
@@ -114,19 +114,22 @@ const Index = () => {
   };
 
   const handleCashOut = async () => {
-    if (isPlaying && currentBet > 0) {
-      const winAmount = currentBet * currentMultiplier;
-      const newBalance = balance + winAmount;
-      setBalance(newBalance);
-      await updateBalance(newBalance);
-      setTotalWon(prev => prev + winAmount);
+    if ((isPlaying && currentBet > 0) || isDemoMode) {
+      const winAmount = isDemoMode ? 100 * currentMultiplier : currentBet * currentMultiplier;
+      
+      if (!isDemoMode) {
+        const newBalance = balance + winAmount;
+        setBalance(newBalance);
+        await updateBalance(newBalance);
+        setTotalWon(prev => prev + winAmount);
+      }
       
       const gameRecord: GameRecord = {
         id: Date.now(),
         multiplier: currentMultiplier,
         crashed: false,
         timestamp: new Date(),
-        betAmount: currentBet,
+        betAmount: isDemoMode ? 100 : currentBet,
         winAmount: winAmount
       };
       
@@ -135,28 +138,28 @@ const Index = () => {
       setCurrentBet(0);
       
       toast({
-        title: "Cash Out Successful! 💰",
-        description: `Won $${winAmount.toFixed(2)} at ${currentMultiplier.toFixed(2)}x`,
+        title: isDemoMode ? "Demo Cash Out! 🎮" : "Cash Out Successful! 💰",
+        description: `${isDemoMode ? 'Demo won' : 'Won'} $${winAmount.toFixed(2)} at ${currentMultiplier.toFixed(2)}x`,
       });
     }
   };
 
   const handleGameEnd = (crashed: boolean, finalMultiplier: number) => {
-    if (crashed && isPlaying) {
+    if (crashed && (isPlaying || isDemoMode)) {
       const gameRecord: GameRecord = {
         id: Date.now(),
         multiplier: finalMultiplier,
         crashed: true,
         timestamp: new Date(),
-        betAmount: currentBet,
+        betAmount: isDemoMode ? 100 : currentBet,
         winAmount: 0
       };
       
       setGameHistory(prev => [gameRecord, ...prev]);
       
       toast({
-        title: "Plane Crashed! 💥",
-        description: `Lost $${currentBet.toFixed(2)} at ${finalMultiplier.toFixed(2)}x`,
+        title: isDemoMode ? "Demo Crashed! 🎮" : "Plane Crashed! 💥",
+        description: `${isDemoMode ? 'Demo lost' : 'Lost'} $${isDemoMode ? '100' : currentBet.toFixed(2)} at ${finalMultiplier.toFixed(2)}x`,
         variant: "destructive",
       });
     }
@@ -167,6 +170,31 @@ const Index = () => {
 
   const handleGameStart = () => {
     setCurrentMultiplier(1.0);
+  };
+
+  const handleDemoStart = () => {
+    setCurrentMultiplier(1.0);
+    setCurrentBet(100); // Demo bet amount
+  };
+
+  const handleToggleDemoMode = () => {
+    if (isPlaying) {
+      toast({
+        title: "Cannot Switch Modes",
+        description: "Please finish your current game first",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsDemoMode(!isDemoMode);
+    setCurrentBet(0);
+    setCurrentMultiplier(1.0);
+    
+    toast({
+      title: isDemoMode ? "Demo Mode Disabled" : "Demo Mode Enabled! 🎮",
+      description: isDemoMode ? "You can now place real bets" : "Practice without risking real money",
+    });
   };
 
   const handleDeposit = () => {
@@ -198,7 +226,7 @@ const Index = () => {
     });
   };
 
-  const potentialWin = currentBet * currentMultiplier;
+  const potentialWin = isDemoMode ? 100 * currentMultiplier : currentBet * currentMultiplier;
 
   return (
     <div className="h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex flex-col overflow-hidden">
@@ -277,6 +305,8 @@ const Index = () => {
                 onGameEnd={handleGameEnd}
                 isPlaying={isPlaying}
                 onGameStart={handleGameStart}
+                isDemoMode={isDemoMode}
+                onDemoStart={handleDemoStart}
               />
             </div>
             
@@ -288,6 +318,8 @@ const Index = () => {
                 isPlaying={isPlaying}
                 currentMultiplier={currentMultiplier}
                 potentialWin={potentialWin}
+                isDemoMode={isDemoMode}
+                onToggleDemoMode={handleToggleDemoMode}
               />
             </div>
           </div>

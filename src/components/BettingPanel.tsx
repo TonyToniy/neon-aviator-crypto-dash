@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Bitcoin, DollarSign, Zap } from 'lucide-react';
+import { Bitcoin, DollarSign, Zap, Play } from 'lucide-react';
 
 interface BettingPanelProps {
   balance: number;
@@ -11,6 +11,8 @@ interface BettingPanelProps {
   isPlaying: boolean;
   currentMultiplier: number;
   potentialWin: number;
+  isDemoMode?: boolean;
+  onToggleDemoMode?: () => void;
 }
 
 const BettingPanel: React.FC<BettingPanelProps> = ({
@@ -19,7 +21,9 @@ const BettingPanel: React.FC<BettingPanelProps> = ({
   onCashOut,
   isPlaying,
   currentMultiplier,
-  potentialWin
+  potentialWin,
+  isDemoMode = false,
+  onToggleDemoMode
 }) => {
   const [betAmount, setBetAmount] = useState(10);
 
@@ -37,36 +41,69 @@ const BettingPanel: React.FC<BettingPanelProps> = ({
 
   return (
     <div className="glass-effect rounded-xl p-3 border border-neon-blue/30">
-      <div className="flex items-center gap-2 mb-3">
-        <div className="p-1 bg-gradient-to-r from-neon-blue to-neon-purple rounded-lg">
-          <Bitcoin className="w-4 h-4 text-white" />
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <div className="p-1 bg-gradient-to-r from-neon-blue to-neon-purple rounded-lg">
+            <Bitcoin className="w-4 h-4 text-white" />
+          </div>
+          <div>
+            <h3 className="text-base font-bold text-white">
+              {isDemoMode ? 'Demo Mode' : 'Place Bet'}
+            </h3>
+            <p className="text-gray-400 text-xs">
+              {isDemoMode ? 'Practice without risk' : `Balance: $${balance.toFixed(2)}`}
+            </p>
+          </div>
         </div>
-        <div>
-          <h3 className="text-base font-bold text-white">Place Bet</h3>
-          <p className="text-gray-400 text-xs">Balance: ${balance.toFixed(2)}</p>
-        </div>
+
+        {/* Demo Mode Toggle */}
+        {onToggleDemoMode && (
+          <Button
+            onClick={onToggleDemoMode}
+            variant="outline"
+            size="sm"
+            className={`text-xs border-orange-500/30 ${
+              isDemoMode 
+                ? 'bg-orange-500/20 text-orange-400 border-orange-400' 
+                : 'text-orange-400 hover:bg-orange-500/10'
+            }`}
+          >
+            <Play className="w-3 h-3 mr-1" />
+            {isDemoMode ? 'EXIT DEMO' : 'DEMO'}
+          </Button>
+        )}
       </div>
 
       {/* Current Game Stats */}
-      {isPlaying && (
-        <div className="bg-gradient-to-r from-neon-green/10 to-emerald-500/10 rounded-lg p-2 mb-3 border border-neon-green/30">
+      {(isPlaying || isDemoMode) && (
+        <div className={`${
+          isDemoMode 
+            ? 'bg-gradient-to-r from-orange-500/10 to-yellow-500/10 border-orange-500/30' 
+            : 'bg-gradient-to-r from-neon-green/10 to-emerald-500/10 border-neon-green/30'
+        } rounded-lg p-2 mb-3 border`}>
           <div className="flex justify-between items-center mb-1">
             <span className="text-gray-300 text-xs">Multiplier:</span>
-            <span className="text-neon-green font-bold text-sm">
+            <span className={`font-bold text-sm ${
+              isDemoMode ? 'text-orange-400' : 'text-neon-green'
+            }`}>
               {currentMultiplier.toFixed(2)}x
             </span>
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-gray-300 text-xs">Win:</span>
-            <span className="text-neon-green font-bold text-sm">
+            <span className="text-gray-300 text-xs">
+              {isDemoMode ? 'Demo Win:' : 'Win:'}
+            </span>
+            <span className={`font-bold text-sm ${
+              isDemoMode ? 'text-orange-400' : 'text-neon-green'
+            }`}>
               ${potentialWin.toFixed(2)}
             </span>
           </div>
         </div>
       )}
 
-      {/* Bet Amount Section */}
-      {!isPlaying && (
+      {/* Bet Amount Section - Only show in real mode */}
+      {!isPlaying && !isDemoMode && (
         <>
           <div className="mb-2">
             <label className="block text-xs font-medium text-gray-300 mb-1">
@@ -105,7 +142,7 @@ const BettingPanel: React.FC<BettingPanelProps> = ({
 
       {/* Action Buttons */}
       <div className="space-y-1">
-        {!isPlaying ? (
+        {!isPlaying && !isDemoMode ? (
           <Button
             onClick={handlePlaceBet}
             disabled={betAmount <= 0 || betAmount > balance}
@@ -114,17 +151,21 @@ const BettingPanel: React.FC<BettingPanelProps> = ({
             <Zap className="w-3 h-3 mr-1" />
             PLACE BET ${betAmount}
           </Button>
-        ) : (
+        ) : (isPlaying || isDemoMode) ? (
           <Button
             onClick={onCashOut}
-            className="w-full bg-gradient-to-r from-neon-green to-emerald-500 hover:from-emerald-500 hover:to-neon-green text-white font-bold py-2 rounded-lg neon-glow transition-all duration-300 hover:scale-105 animate-pulse text-sm"
+            className={`w-full ${
+              isDemoMode 
+                ? 'bg-gradient-to-r from-orange-500 to-yellow-500 hover:from-yellow-500 hover:to-orange-500' 
+                : 'bg-gradient-to-r from-neon-green to-emerald-500 hover:from-emerald-500 hover:to-neon-green'
+            } text-white font-bold py-2 rounded-lg neon-glow transition-all duration-300 hover:scale-105 animate-pulse text-sm`}
           >
-            CASH OUT ${potentialWin.toFixed(2)}
+            {isDemoMode ? `DEMO CASH OUT $${potentialWin.toFixed(2)}` : `CASH OUT $${potentialWin.toFixed(2)}`}
           </Button>
-        )}
+        ) : null}
 
-        {/* Max Bet Button */}
-        {!isPlaying && (
+        {/* Max Bet Button - Only in real mode */}
+        {!isPlaying && !isDemoMode && (
           <Button
             onClick={() => handleBetAmountChange(balance)}
             variant="outline"
