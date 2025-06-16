@@ -84,9 +84,6 @@ const AviatorGame: React.FC<AviatorGameProps> = ({
     // Call the parent's cash out handler
     onCashOut();
     
-    // Don't call onGameEnd with crashed=true for manual cash outs
-    // The parent component will handle the game end logic
-    
     setTimeout(() => {
       setGameState('waiting');
       setMultiplier(1.0);
@@ -143,15 +140,12 @@ const AviatorGame: React.FC<AviatorGameProps> = ({
         </div>
       </div>
 
-      {/* Flying plane following curve */}
+      {/* Flying plane positioned in the middle */}
       {gameState === 'flying' && (
         <div 
-          className="absolute text-neon-blue"
-          style={{
-            animation: `smooth-curve-flight ${Math.max(4, crashPoint * 1.5)}s ease-out forwards`,
-          }}
+          className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 text-neon-blue animate-bounce"
         >
-          <Plane size={20} className="rotate-12 drop-shadow-lg" />
+          <Plane size={24} className="rotate-12 drop-shadow-lg" />
           <div className="absolute -top-1 -right-1 w-1 h-1 bg-neon-green rounded-full animate-ping"></div>
         </div>
       )}
