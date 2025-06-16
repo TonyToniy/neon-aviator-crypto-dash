@@ -41,23 +41,10 @@ const Index = () => {
   const [showSettings, setShowSettings] = useState(false);
   const { toast } = useToast();
 
-  // Redirect to auth if not authenticated
-  if (loading) {
-    return (
-      <div className="h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
-        <div className="animate-spin">
-          <Plane className="w-8 h-8 text-neon-blue" />
-        </div>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return <Navigate to="/auth" replace />;
-  }
-
   // Fetch user balance from database
   const fetchBalance = async () => {
+    if (!user) return;
+    
     try {
       const { data, error } = await supabase
         .from('user_balances')
@@ -74,6 +61,8 @@ const Index = () => {
 
   // Update balance in database
   const updateBalance = async (newBalance: number) => {
+    if (!user) return;
+    
     try {
       const { error } = await supabase
         .from('user_balances')
@@ -86,11 +75,27 @@ const Index = () => {
     }
   };
 
+  // ALL HOOKS MUST BE CALLED BEFORE ANY CONDITIONAL RETURNS
   useEffect(() => {
     if (user) {
       fetchBalance();
     }
   }, [user]);
+
+  // Redirect to auth if not authenticated - AFTER all hooks
+  if (loading) {
+    return (
+      <div className="h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+        <div className="animate-spin">
+          <Plane className="w-8 h-8 text-neon-blue" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/auth" replace />;
+  }
 
   const handlePlaceBet = async (amount: number) => {
     if (amount <= balance) {
