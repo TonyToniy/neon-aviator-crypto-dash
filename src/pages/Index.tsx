@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
-import { Plane, Zap, Coins, LogOut, Settings } from 'lucide-react';
+import { Plane, Zap, Coins, LogOut, Settings, LogIn } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -38,7 +39,7 @@ const Index = () => {
   const [totalWon, setTotalWon] = useState(0);
   const [showDeposit, setShowDeposit] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const [isDemoMode, setIsDemoMode] = useState(false);
+  const [isDemoMode, setIsDemoMode] = useState(!user); // Default to demo mode if not authenticated
   const [demoBalance, setDemoBalance] = useState(1000);
   const { toast } = useToast();
 
@@ -76,14 +77,16 @@ const Index = () => {
     }
   };
 
-  // ALL HOOKS MUST BE CALLED BEFORE ANY CONDITIONAL RETURNS
   useEffect(() => {
     if (user) {
       fetchBalance();
+      setIsDemoMode(false); // Switch to real mode when authenticated
+    } else {
+      setIsDemoMode(true); // Force demo mode when not authenticated
     }
   }, [user]);
 
-  // Redirect to auth if not authenticated - AFTER all hooks
+  // Show loading spinner while checking auth
   if (loading) {
     return (
       <div className="h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
@@ -94,11 +97,17 @@ const Index = () => {
     );
   }
 
-  if (!user) {
-    return <Navigate to="/auth" replace />;
-  }
-
   const handlePlaceBet = async (amount: number) => {
+    // Require authentication for real money bets
+    if (!isDemoMode && !user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to place real money bets",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (isDemoMode) {
       if (amount <= demoBalance) {
         const newDemoBalance = demoBalance - amount;
@@ -209,6 +218,15 @@ const Index = () => {
       });
       return;
     }
+
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to access real money mode",
+        variant: "destructive",
+      });
+      return;
+    }
     
     setIsDemoMode(!isDemoMode);
     setCurrentBet(0);
@@ -220,17 +238,32 @@ const Index = () => {
     }
     
     toast({
-      title: isDemoMode ? "Demo Mode Disabled" : "Demo Mode Enabled! 🎮",
-      description: isDemoMode ? "You can now place real bets" : "Practice without risking real money",
+      title: isDemoMode ? "Real Money Mode Enabled" : "Demo Mode Enabled! 🎮",
+      description: isDemoMode ? "You can now place real money bets" : "Practice without risking real money",
     });
   };
 
   const handleDeposit = () => {
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to make deposits",
+        variant: "destructive",
+      });
+      return;
+    }
     setShowDeposit(true);
   };
 
   const handleWithdraw = () => {
-    // In production, implement proper withdrawal logic
+    if (!user) {
+      toast({
+        title: "Authentication Required", 
+        description: "Please sign in to make withdrawals",
+        variant: "destructive",
+      });
+      return;
+    }
     toast({
       title: "Withdrawal Request",
       description: "Withdrawal functionality coming soon",
@@ -278,48 +311,71 @@ const Index = () => {
             </div>
             
             <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1 text-neon-green">
-                <Coins className="w-4 h-4" />
-                <span className="font-bold text-sm">
-                  {isDemoMode ? `DEMO $${displayBalance.toFixed(2)}` : `$${displayBalance.toFixed(2)}`}
-                </span>
-              </div>
-              
-              <div className="flex items-center gap-1 text-neon-purple">
-                <Zap className="w-3 h-3" />
-                <span className="font-semibold text-xs">
-                  {gameHistory.length > 0 
-                    ? `${((gameHistory.filter(g => !g.crashed).length / gameHistory.length) * 100).toFixed(0)}%`
-                    : 'New'
-                  }
-                </span>
-              </div>
-
-              <Dialog open={showSettings} onOpenChange={setShowSettings}>
-                <DialogTrigger asChild>
-                  <Button variant="ghost" size="sm" className="text-gray-400 hover:text-neon-blue">
-                    <Settings className="w-4 h-4" />
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="bg-slate-900 border-neon-blue/30">
-                  <DialogHeader>
-                    <DialogTitle className="text-white">Account Settings</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4 py-4">
-                    <div className="text-sm text-gray-300">
-                      <strong>Email:</strong> {user.email}
-                    </div>
-                    <Button
-                      onClick={handleSignOut}
-                      variant="outline"
-                      className="w-full border-red-500/30 text-red-400 hover:bg-red-500/10"
-                    >
-                      <LogOut className="w-4 h-4 mr-2" />
-                      Sign Out
-                    </Button>
+              {user ? (
+                <>
+                  <div className="flex items-center gap-1 text-neon-green">
+                    <Coins className="w-4 h-4" />
+                    <span className="font-bold text-sm">
+                      {isDemoMode ? `DEMO $${displayBalance.toFixed(2)}` : `$${displayBalance.toFixed(2)}`}
+                    </span>
                   </div>
-                </DialogContent>
-              </Dialog>
+                  
+                  <div className="flex items-center gap-1 text-neon-purple">
+                    <Zap className="w-3 h-3" />
+                    <span className="font-semibold text-xs">
+                      {gameHistory.length > 0 
+                        ? `${((gameHistory.filter(g => !g.crashed).length / gameHistory.length) * 100).toFixed(0)}%`
+                        : 'New'
+                      }
+                    </span>
+                  </div>
+
+                  <Dialog open={showSettings} onOpenChange={setShowSettings}>
+                    <DialogTrigger asChild>
+                      <Button variant="ghost" size="sm" className="text-gray-400 hover:text-neon-blue">
+                        <Settings className="w-4 h-4" />
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="bg-slate-900 border-neon-blue/30">
+                      <DialogHeader>
+                        <DialogTitle className="text-white">Account Settings</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4 py-4">
+                        <div className="text-sm text-gray-300">
+                          <strong>Email:</strong> {user.email}
+                        </div>
+                        <Button
+                          onClick={handleSignOut}
+                          variant="outline"
+                          className="w-full border-red-500/30 text-red-400 hover:bg-red-500/10"
+                        >
+                          <LogOut className="w-4 h-4 mr-2" />
+                          Sign Out
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </>
+              ) : (
+                <>
+                  <div className="flex items-center gap-1 text-orange-400">
+                    <Coins className="w-4 h-4" />
+                    <span className="font-bold text-sm">
+                      DEMO $${demoBalance.toFixed(2)}
+                    </span>
+                  </div>
+                  
+                  <Button
+                    onClick={() => window.location.href = '/auth'}
+                    variant="outline"
+                    size="sm"
+                    className="border-neon-blue/30 text-neon-blue hover:bg-neon-blue/10"
+                  >
+                    <LogIn className="w-4 h-4 mr-1" />
+                    Sign In
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -351,7 +407,7 @@ const Index = () => {
                 currentMultiplier={currentMultiplier}
                 potentialWin={potentialWin}
                 isDemoMode={isDemoMode}
-                onToggleDemoMode={handleToggleDemoMode}
+                onToggleDemoMode={user ? handleToggleDemoMode : undefined}
                 demoBalance={demoBalance}
               />
             </div>
@@ -379,17 +435,19 @@ const Index = () => {
       </main>
 
       {/* Crypto Deposit Modal */}
-      <Dialog open={showDeposit} onOpenChange={setShowDeposit}>
-        <DialogContent className="bg-slate-900 border-neon-blue/30 max-w-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-white">Bitcoin Deposit</DialogTitle>
-          </DialogHeader>
-          <CryptoDeposit 
-            userId={user.id} 
-            onDepositSuccess={handleDepositSuccess}
-          />
-        </DialogContent>
-      </Dialog>
+      {user && (
+        <Dialog open={showDeposit} onOpenChange={setShowDeposit}>
+          <DialogContent className="bg-slate-900 border-neon-blue/30 max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="text-white">Bitcoin Deposit</DialogTitle>
+            </DialogHeader>
+            <CryptoDeposit 
+              userId={user.id} 
+              onDepositSuccess={handleDepositSuccess}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 };

@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Bitcoin, DollarSign, Zap, Play } from 'lucide-react';
+import { Bitcoin, DollarSign, Zap, Play, LogIn } from 'lucide-react';
 
 interface BettingPanelProps {
   balance: number;
@@ -60,8 +60,8 @@ const BettingPanel: React.FC<BettingPanelProps> = ({
           </div>
         </div>
 
-        {/* Demo Mode Toggle */}
-        {onToggleDemoMode && (
+        {/* Demo Mode Toggle - only show if authenticated */}
+        {onToggleDemoMode ? (
           <Button
             onClick={onToggleDemoMode}
             variant="outline"
@@ -73,7 +73,17 @@ const BettingPanel: React.FC<BettingPanelProps> = ({
             }`}
           >
             <Play className="w-3 h-3 mr-1" />
-            {isDemoMode ? 'EXIT DEMO' : 'DEMO'}
+            {isDemoMode ? 'REAL MONEY' : 'DEMO'}
+          </Button>
+        ) : isDemoMode && (
+          <Button
+            onClick={() => window.location.href = '/auth'}
+            variant="outline"
+            size="sm"
+            className="text-xs border-neon-blue/30 text-neon-blue hover:bg-neon-blue/10"
+          >
+            <LogIn className="w-3 h-3 mr-1" />
+            SIGN IN
           </Button>
         )}
       </div>
