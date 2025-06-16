@@ -13,6 +13,7 @@ interface BettingPanelProps {
   potentialWin: number;
   isDemoMode?: boolean;
   onToggleDemoMode?: () => void;
+  demoBalance?: number;
 }
 
 const BettingPanel: React.FC<BettingPanelProps> = ({
@@ -23,18 +24,21 @@ const BettingPanel: React.FC<BettingPanelProps> = ({
   currentMultiplier,
   potentialWin,
   isDemoMode = false,
-  onToggleDemoMode
+  onToggleDemoMode,
+  demoBalance = 1000
 }) => {
   const [betAmount, setBetAmount] = useState(10);
 
   const quickBetAmounts = [10, 25, 50, 100];
+  const displayBalance = isDemoMode ? demoBalance : balance;
+  const maxBet = isDemoMode ? demoBalance : balance;
 
   const handleBetAmountChange = (amount: number) => {
-    setBetAmount(Math.min(amount, balance));
+    setBetAmount(Math.min(amount, maxBet));
   };
 
   const handlePlaceBet = () => {
-    if (betAmount <= balance && betAmount > 0) {
+    if (betAmount <= maxBet && betAmount > 0) {
       onPlaceBet(betAmount);
     }
   };
@@ -51,7 +55,7 @@ const BettingPanel: React.FC<BettingPanelProps> = ({
               {isDemoMode ? 'Demo Mode' : 'Place Bet'}
             </h3>
             <p className="text-gray-400 text-xs">
-              {isDemoMode ? 'Practice without risk' : `Balance: $${balance.toFixed(2)}`}
+              {isDemoMode ? `Demo Balance: $${displayBalance.toFixed(2)}` : `Balance: $${displayBalance.toFixed(2)}`}
             </p>
           </div>
         </div>
@@ -102,8 +106,8 @@ const BettingPanel: React.FC<BettingPanelProps> = ({
         </div>
       )}
 
-      {/* Bet Amount Section - Only show in real mode */}
-      {!isPlaying && !isDemoMode && (
+      {/* Bet Amount Section */}
+      {!isPlaying && (
         <>
           <div className="mb-2">
             <label className="block text-xs font-medium text-gray-300 mb-1">
@@ -116,7 +120,7 @@ const BettingPanel: React.FC<BettingPanelProps> = ({
                 onChange={(e) => handleBetAmountChange(Number(e.target.value))}
                 className="bg-slate-800/50 border-neon-blue/30 text-white pr-12 text-sm font-semibold h-8"
                 min="1"
-                max={balance}
+                max={maxBet}
               />
               <DollarSign className="absolute right-2 top-1/2 transform -translate-y-1/2 text-neon-green w-4 h-4" />
             </div>
@@ -130,7 +134,7 @@ const BettingPanel: React.FC<BettingPanelProps> = ({
                 variant="outline"
                 size="sm"
                 onClick={() => handleBetAmountChange(amount)}
-                disabled={amount > balance}
+                disabled={amount > maxBet}
                 className="border-neon-blue/30 text-neon-blue hover:bg-neon-blue/10 hover:border-neon-blue/50 transition-all duration-200 text-xs py-1 h-6"
               >
                 ${amount}
@@ -142,16 +146,16 @@ const BettingPanel: React.FC<BettingPanelProps> = ({
 
       {/* Action Buttons */}
       <div className="space-y-1">
-        {!isPlaying && !isDemoMode ? (
+        {!isPlaying ? (
           <Button
             onClick={handlePlaceBet}
-            disabled={betAmount <= 0 || betAmount > balance}
+            disabled={betAmount <= 0 || betAmount > maxBet}
             className="w-full bg-gradient-to-r from-neon-blue to-neon-purple hover:from-neon-purple hover:to-neon-pink text-white font-bold py-2 rounded-lg neon-glow transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
           >
             <Zap className="w-3 h-3 mr-1" />
-            PLACE BET ${betAmount}
+            {isDemoMode ? `DEMO BET $${betAmount}` : `PLACE BET $${betAmount}`}
           </Button>
-        ) : (isPlaying || isDemoMode) ? (
+        ) : (
           <Button
             onClick={onCashOut}
             className={`w-full ${
@@ -162,15 +166,15 @@ const BettingPanel: React.FC<BettingPanelProps> = ({
           >
             {isDemoMode ? `DEMO CASH OUT $${potentialWin.toFixed(2)}` : `CASH OUT $${potentialWin.toFixed(2)}`}
           </Button>
-        ) : null}
+        )}
 
-        {/* Max Bet Button - Only in real mode */}
-        {!isPlaying && !isDemoMode && (
+        {/* Max Bet Button */}
+        {!isPlaying && (
           <Button
-            onClick={() => handleBetAmountChange(balance)}
+            onClick={() => handleBetAmountChange(maxBet)}
             variant="outline"
             className="w-full border-neon-orange/30 text-neon-orange hover:bg-neon-orange/10 hover:border-neon-orange/50 text-xs py-1 h-6"
-            disabled={balance <= 0}
+            disabled={maxBet <= 0}
           >
             MAX BET
           </Button>

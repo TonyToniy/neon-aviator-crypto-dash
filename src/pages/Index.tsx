@@ -39,6 +39,7 @@ const Index = () => {
   const [showDeposit, setShowDeposit] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [isDemoMode, setIsDemoMode] = useState(false);
+  const [demoBalance, setDemoBalance] = useState(1000);
   const { toast } = useToast();
 
   // Fetch user balance from database
@@ -98,26 +99,43 @@ const Index = () => {
   }
 
   const handlePlaceBet = async (amount: number) => {
-    if (amount <= balance) {
-      const newBalance = balance - amount;
-      setBalance(newBalance);
-      await updateBalance(newBalance);
-      setCurrentBet(amount);
-      setIsPlaying(true);
-      setTotalWagered(prev => prev + amount);
-      
-      toast({
-        title: "Bet Placed! 🚀",
-        description: `$${amount} bet placed. Good luck!`,
-      });
+    if (isDemoMode) {
+      if (amount <= demoBalance) {
+        const newDemoBalance = demoBalance - amount;
+        setDemoBalance(newDemoBalance);
+        setCurrentBet(amount);
+        setIsPlaying(true);
+        
+        toast({
+          title: "Demo Bet Placed! 🎮",
+          description: `Demo $${amount} bet placed. Good luck!`,
+        });
+      }
+    } else {
+      if (amount <= balance) {
+        const newBalance = balance - amount;
+        setBalance(newBalance);
+        await updateBalance(newBalance);
+        setCurrentBet(amount);
+        setIsPlaying(true);
+        setTotalWagered(prev => prev + amount);
+        
+        toast({
+          title: "Bet Placed! 🚀",
+          description: `$${amount} bet placed. Good luck!`,
+        });
+      }
     }
   };
 
   const handleCashOut = async () => {
-    if ((isPlaying && currentBet > 0) || isDemoMode) {
-      const winAmount = isDemoMode ? 100 * currentMultiplier : currentBet * currentMultiplier;
+    if (isPlaying && currentBet > 0) {
+      const winAmount = currentBet * currentMultiplier;
       
-      if (!isDemoMode) {
+      if (isDemoMode) {
+        const newDemoBalance = demoBalance + winAmount;
+        setDemoBalance(newDemoBalance);
+      } else {
         const newBalance = balance + winAmount;
         setBalance(newBalance);
         await updateBalance(newBalance);
@@ -129,7 +147,7 @@ const Index = () => {
         multiplier: currentMultiplier,
         crashed: false,
         timestamp: new Date(),
-        betAmount: isDemoMode ? 100 : currentBet,
+        betAmount: currentBet,
         winAmount: winAmount
       };
       
@@ -145,13 +163,13 @@ const Index = () => {
   };
 
   const handleGameEnd = (crashed: boolean, finalMultiplier: number) => {
-    if (crashed && (isPlaying || isDemoMode)) {
+    if (crashed && isPlaying) {
       const gameRecord: GameRecord = {
         id: Date.now(),
         multiplier: finalMultiplier,
         crashed: true,
         timestamp: new Date(),
-        betAmount: isDemoMode ? 100 : currentBet,
+        betAmount: currentBet,
         winAmount: 0
       };
       
@@ -159,7 +177,7 @@ const Index = () => {
       
       toast({
         title: isDemoMode ? "Demo Crashed! 🎮" : "Plane Crashed! 💥",
-        description: `${isDemoMode ? 'Demo lost' : 'Lost'} $${isDemoMode ? '100' : currentBet.toFixed(2)} at ${finalMultiplier.toFixed(2)}x`,
+        description: `${isDemoMode ? 'Demo lost' : 'Lost'} $${currentBet.toFixed(2)} at ${finalMultiplier.toFixed(2)}x`,
         variant: "destructive",
       });
     }
@@ -174,7 +192,6 @@ const Index = () => {
 
   const handleDemoStart = () => {
     setCurrentMultiplier(1.0);
-    setCurrentBet(100); // Demo bet amount
   };
 
   const handleToggleDemoMode = () => {
@@ -190,6 +207,11 @@ const Index = () => {
     setIsDemoMode(!isDemoMode);
     setCurrentBet(0);
     setCurrentMultiplier(1.0);
+    
+    // Reset demo balance when entering demo mode
+    if (!isDemoMode) {
+      setDemoBalance(1000);
+    }
     
     toast({
       title: isDemoMode ? "Demo Mode Disabled" : "Demo Mode Enabled! 🎮",
@@ -226,7 +248,8 @@ const Index = () => {
     });
   };
 
-  const potentialWin = isDemoMode ? 100 * currentMultiplier : currentBet * currentMultiplier;
+  const potentialWin = currentBet * currentMultiplier;
+  const displayBalance = isDemoMode ? demoBalance : balance;
 
   return (
     <div className="h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex flex-col overflow-hidden">
@@ -251,7 +274,9 @@ const Index = () => {
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-1 text-neon-green">
                 <Coins className="w-4 h-4" />
-                <span className="font-bold text-sm">${balance.toFixed(2)}</span>
+                <span className="font-bold text-sm">
+                  {isDemoMode ? `DEMO $${displayBalance.toFixed(2)}` : `$${displayBalance.toFixed(2)}`}
+                </span>
               </div>
               
               <div className="flex items-center gap-1 text-neon-purple">
@@ -307,6 +332,7 @@ const Index = () => {
                 onGameStart={handleGameStart}
                 isDemoMode={isDemoMode}
                 onDemoStart={handleDemoStart}
+                onCashOut={handleCashOut}
               />
             </div>
             
@@ -320,6 +346,7 @@ const Index = () => {
                 potentialWin={potentialWin}
                 isDemoMode={isDemoMode}
                 onToggleDemoMode={handleToggleDemoMode}
+                demoBalance={demoBalance}
               />
             </div>
           </div>
@@ -328,7 +355,7 @@ const Index = () => {
           <div className="lg:col-span-4 flex flex-col lg:grid lg:grid-rows-2 gap-2 h-full overflow-hidden">
             <div className="min-h-0">
               <PlayerStats
-                balance={balance}
+                balance={displayBalance}
                 totalWagered={totalWagered}
                 totalWon={totalWon}
                 gamesPlayed={gameHistory.length}

@@ -10,6 +10,7 @@ interface AviatorGameProps {
   onGameStart: () => void;
   isDemoMode?: boolean;
   onDemoStart?: () => void;
+  onCashOut: () => void;
 }
 
 const AviatorGame: React.FC<AviatorGameProps> = ({
@@ -18,7 +19,8 @@ const AviatorGame: React.FC<AviatorGameProps> = ({
   isPlaying,
   onGameStart,
   isDemoMode = false,
-  onDemoStart
+  onDemoStart,
+  onCashOut
 }) => {
   const [multiplier, setMultiplier] = useState(1.0);
   const [gameState, setGameState] = useState<'waiting' | 'flying' | 'crashed'>('waiting');
@@ -72,11 +74,11 @@ const AviatorGame: React.FC<AviatorGameProps> = ({
     }, 50);
   };
 
-  const stopGame = () => {
+  const handleCashOut = () => {
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
     }
-    onGameEnd(false, multiplier);
+    onCashOut();
     setGameState('crashed');
     
     setTimeout(() => {
@@ -187,7 +189,7 @@ const AviatorGame: React.FC<AviatorGameProps> = ({
         
         {gameState === 'flying' && (isPlaying || isDemoMode) && (
           <Button
-            onClick={stopGame}
+            onClick={handleCashOut}
             className="bg-gradient-to-r from-neon-green to-emerald-500 hover:from-emerald-500 hover:to-neon-green text-white font-bold py-1 px-3 rounded-lg neon-glow transition-all duration-300 hover:scale-105 text-xs"
           >
             {isDemoMode ? `DEMO CASH OUT ${multiplier.toFixed(2)}x` : `CASH OUT ${multiplier.toFixed(2)}x`}
