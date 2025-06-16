@@ -75,11 +75,17 @@ const AviatorGame: React.FC<AviatorGameProps> = ({
   };
 
   const handleCashOut = () => {
+    console.log(`${isDemoMode ? 'Demo' : 'Real'} cash out triggered at ${multiplier.toFixed(2)}x`);
+    
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
     }
+    
+    // Call the parent's cash out handler
     onCashOut();
-    setGameState('crashed');
+    
+    // Don't call onGameEnd with crashed=true for manual cash outs
+    // The parent component will handle the game end logic
     
     setTimeout(() => {
       setGameState('waiting');

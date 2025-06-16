@@ -129,17 +129,21 @@ const Index = () => {
   };
 
   const handleCashOut = async () => {
-    if (isPlaying && currentBet > 0) {
+    console.log(`Cash out called - isPlaying: ${isPlaying}, currentBet: ${currentBet}, isDemoMode: ${isDemoMode}`);
+    
+    if ((isPlaying || isDemoMode) && currentBet > 0) {
       const winAmount = currentBet * currentMultiplier;
       
       if (isDemoMode) {
         const newDemoBalance = demoBalance + winAmount;
         setDemoBalance(newDemoBalance);
+        console.log(`Demo cash out: won ${winAmount}, new demo balance: ${newDemoBalance}`);
       } else {
         const newBalance = balance + winAmount;
         setBalance(newBalance);
         await updateBalance(newBalance);
         setTotalWon(prev => prev + winAmount);
+        console.log(`Real cash out: won ${winAmount}, new balance: ${newBalance}`);
       }
       
       const gameRecord: GameRecord = {
@@ -163,7 +167,9 @@ const Index = () => {
   };
 
   const handleGameEnd = (crashed: boolean, finalMultiplier: number) => {
-    if (crashed && isPlaying) {
+    console.log(`Game ended - crashed: ${crashed}, finalMultiplier: ${finalMultiplier}, isPlaying: ${isPlaying}`);
+    
+    if (crashed && (isPlaying || isDemoMode)) {
       const gameRecord: GameRecord = {
         id: Date.now(),
         multiplier: finalMultiplier,
@@ -361,6 +367,7 @@ const Index = () => {
                 gamesPlayed={gameHistory.length}
                 onDeposit={handleDeposit}
                 onWithdraw={handleWithdraw}
+                isDemoMode={isDemoMode}
               />
             </div>
 

@@ -10,6 +10,7 @@ interface PlayerStatsProps {
   gamesPlayed: number;
   onDeposit: () => void;
   onWithdraw: () => void;
+  isDemoMode?: boolean;
 }
 
 const PlayerStats: React.FC<PlayerStatsProps> = ({
@@ -18,7 +19,8 @@ const PlayerStats: React.FC<PlayerStatsProps> = ({
   totalWon,
   gamesPlayed,
   onDeposit,
-  onWithdraw
+  onWithdraw,
+  isDemoMode = false
 }) => {
   const netProfit = totalWon - totalWagered;
   const winRate = gamesPlayed > 0 ? ((totalWon / totalWagered) * 100) : 0;
@@ -30,37 +32,51 @@ const PlayerStats: React.FC<PlayerStatsProps> = ({
           <User className="w-6 h-6 text-white" />
         </div>
         <div>
-          <h3 className="text-xl font-bold text-white">Player Stats</h3>
-          <p className="text-gray-400 text-sm">Track your performance</p>
+          <h3 className="text-xl font-bold text-white">
+            {isDemoMode ? 'Demo Stats' : 'Player Stats'}
+          </h3>
+          <p className="text-gray-400 text-sm">
+            {isDemoMode ? 'Practice performance' : 'Track your performance'}
+          </p>
         </div>
       </div>
 
       {/* Balance Display */}
       <div className="bg-gradient-to-r from-slate-800/50 to-slate-700/50 rounded-xl p-4 mb-6 border border-neon-green/20">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-gray-300">Current Balance</span>
+          <span className="text-gray-300">
+            {isDemoMode ? 'Demo Balance' : 'Current Balance'}
+          </span>
           <Wallet className="w-5 h-5 text-neon-green" />
         </div>
         <div className="text-3xl font-bold text-neon-green mb-4">
           ${balance.toFixed(2)}
+          {isDemoMode && <span className="text-sm text-orange-400 ml-2">(DEMO)</span>}
         </div>
         
         <div className="grid grid-cols-2 gap-2">
           <Button
             onClick={onDeposit}
-            className="bg-gradient-to-r from-neon-blue to-blue-600 hover:from-blue-600 hover:to-neon-blue text-white font-semibold py-2 rounded-lg transition-all duration-200"
+            disabled={isDemoMode}
+            className="bg-gradient-to-r from-neon-blue to-blue-600 hover:from-blue-600 hover:to-neon-blue text-white font-semibold py-2 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Deposit
           </Button>
           <Button
             onClick={onWithdraw}
             variant="outline"
-            className="border-neon-green/30 text-neon-green hover:bg-neon-green/10 hover:border-neon-green/50 font-semibold py-2 rounded-lg transition-all duration-200"
-            disabled={balance <= 0}
+            disabled={balance <= 0 || isDemoMode}
+            className="border-neon-green/30 text-neon-green hover:bg-neon-green/10 hover:border-neon-green/50 font-semibold py-2 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Withdraw
           </Button>
         </div>
+        
+        {isDemoMode && (
+          <p className="text-xs text-orange-400 mt-2 text-center">
+            Deposit/Withdrawal disabled in demo mode
+          </p>
+        )}
       </div>
 
       {/* Stats Grid */}
