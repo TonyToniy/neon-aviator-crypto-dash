@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Plane, TrendingUp, TrendingDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -93,10 +94,23 @@ const AviatorGame: React.FC<AviatorGameProps> = ({
   return (
     <div 
       ref={gameRef}
-      className="relative h-72 w-full bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900 rounded-2xl overflow-hidden border border-neon-blue/30"
+      className="relative h-64 w-full bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900 rounded-2xl overflow-hidden border border-neon-blue/30"
     >
       {/* Animated background grid */}
       <div className="absolute inset-0 bg-cyber-grid bg-grid opacity-20"></div>
+      
+      {/* Flight path line */}
+      {gameState === 'flying' && (
+        <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 100 100" preserveAspectRatio="none">
+          <path
+            d="M0,80 Q25,60 50,40 T100,10"
+            stroke="rgba(0, 245, 255, 0.6)"
+            strokeWidth="0.5"
+            fill="none"
+            className="animate-pulse"
+          />
+        </svg>
+      )}
       
       {/* Multiplier display */}
       <div className="absolute top-3 left-1/2 transform -translate-x-1/2 z-10">
@@ -105,17 +119,17 @@ const AviatorGame: React.FC<AviatorGameProps> = ({
         </div>
       </div>
 
-      {/* Flying plane */}
+      {/* Flying plane with curved path */}
       {gameState === 'flying' && (
         <div 
-          className="absolute bottom-16 left-0 text-neon-blue"
+          className="absolute text-neon-blue"
           style={{
-            animation: `plane-fly ${Math.max(2, crashPoint * 0.8)}s linear infinite`,
-            '--duration': `${Math.max(2, crashPoint * 0.8)}s`
+            animation: `curved-flight ${Math.max(3, crashPoint * 1.2)}s linear infinite`,
+            '--duration': `${Math.max(3, crashPoint * 1.2)}s`
           } as React.CSSProperties}
         >
-          <Plane size={32} className="rotate-12 drop-shadow-lg" />
-          <div className="absolute -top-1 -right-1 w-3 h-3 bg-neon-green rounded-full animate-ping"></div>
+          <Plane size={28} className="rotate-12 drop-shadow-lg" />
+          <div className="absolute -top-1 -right-1 w-2 h-2 bg-neon-green rounded-full animate-ping"></div>
         </div>
       )}
 
@@ -123,9 +137,9 @@ const AviatorGame: React.FC<AviatorGameProps> = ({
       {gameState === 'crashed' && (
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="text-center animate-pulse">
-            <TrendingDown size={60} className="text-red-500 mx-auto mb-3" />
-            <div className="text-3xl font-bold text-red-500">CRASHED!</div>
-            <div className="text-lg text-red-400 mt-1">
+            <TrendingDown size={50} className="text-red-500 mx-auto mb-2" />
+            <div className="text-2xl font-bold text-red-500">CRASHED!</div>
+            <div className="text-base text-red-400 mt-1">
               at {multiplier.toFixed(2)}x
             </div>
           </div>
@@ -133,11 +147,11 @@ const AviatorGame: React.FC<AviatorGameProps> = ({
       )}
 
       {/* Game controls */}
-      <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2">
+      <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2">
         {gameState === 'waiting' && (
           <Button
             onClick={startGame}
-            className="bg-gradient-to-r from-neon-blue to-neon-purple hover:from-neon-purple hover:to-neon-pink text-white font-bold py-2 px-6 rounded-xl neon-glow transition-all duration-300 hover:scale-105"
+            className="bg-gradient-to-r from-neon-blue to-neon-purple hover:from-neon-purple hover:to-neon-pink text-white font-bold py-2 px-4 rounded-xl neon-glow transition-all duration-300 hover:scale-105 text-sm"
           >
             START FLIGHT
           </Button>
@@ -146,7 +160,7 @@ const AviatorGame: React.FC<AviatorGameProps> = ({
         {gameState === 'flying' && isPlaying && (
           <Button
             onClick={stopGame}
-            className="bg-gradient-to-r from-neon-green to-emerald-500 hover:from-emerald-500 hover:to-neon-green text-white font-bold py-2 px-6 rounded-xl neon-glow transition-all duration-300 hover:scale-105"
+            className="bg-gradient-to-r from-neon-green to-emerald-500 hover:from-emerald-500 hover:to-neon-green text-white font-bold py-2 px-4 rounded-xl neon-glow transition-all duration-300 hover:scale-105 text-sm"
           >
             CASH OUT {multiplier.toFixed(2)}x
           </Button>
@@ -155,7 +169,7 @@ const AviatorGame: React.FC<AviatorGameProps> = ({
 
       {/* Floating particles effect */}
       <div className="absolute inset-0 pointer-events-none">
-        {[...Array(15)].map((_, i) => (
+        {[...Array(10)].map((_, i) => (
           <div
             key={i}
             className="absolute w-1 h-1 bg-neon-blue rounded-full opacity-40 animate-float"

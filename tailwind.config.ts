@@ -101,6 +101,33 @@ export default {
 						transform: 'translateX(calc(100vw + 100px)) translateY(-100px) rotate(-15deg)'
 					}
 				},
+				'curved-flight': {
+					'0%': {
+						left: '-10%',
+						bottom: '20%',
+						transform: 'rotate(15deg)'
+					},
+					'25%': {
+						left: '25%',
+						bottom: '40%',
+						transform: 'rotate(10deg)'
+					},
+					'50%': {
+						left: '50%',
+						bottom: '60%',
+						transform: 'rotate(5deg)'
+					},
+					'75%': {
+						left: '75%',
+						bottom: '75%',
+						transform: 'rotate(0deg)'
+					},
+					'100%': {
+						left: '110%',
+						bottom: '85%',
+						transform: 'rotate(-5deg)'
+					}
+				},
 				'glow-pulse': {
 					'0%, 100%': {
 						boxShadow: '0 0 20px rgba(0, 245, 255, 0.5)'
@@ -140,6 +167,7 @@ export default {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out',
 				'plane-fly': 'plane-fly var(--duration) linear',
+				'curved-flight': 'curved-flight var(--duration) ease-out',
 				'glow-pulse': 'glow-pulse 2s ease-in-out infinite',
 				'number-glow': 'number-glow 1s ease-in-out infinite',
 				'float': 'float 3s ease-in-out infinite',
