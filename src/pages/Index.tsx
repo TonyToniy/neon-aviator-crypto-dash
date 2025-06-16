@@ -114,38 +114,37 @@ const Index = () => {
   const potentialWin = currentBet * currentMultiplier;
 
   return (
-    <div className="min-h-screen max-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex flex-col overflow-hidden">
+    <div className="h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex flex-col overflow-hidden">
       {/* Animated background */}
       <div className="fixed inset-0 bg-cyber-grid bg-grid opacity-5"></div>
       
-      {/* Header - Minimal height */}
-      <header className="relative z-10 bg-gradient-to-r from-slate-900/80 to-slate-800/80 backdrop-blur-lg border-b border-neon-blue/20 flex-shrink-0">
-        <div className="container mx-auto px-4 py-2">
+      {/* Header - Very compact */}
+      <header className="relative z-10 bg-gradient-to-r from-slate-900/80 to-slate-800/80 backdrop-blur-lg border-b border-neon-blue/20 py-1">
+        <div className="container mx-auto px-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="p-1.5 bg-gradient-to-r from-neon-blue to-neon-purple rounded-lg">
-                <Plane className="w-5 h-5 text-white" />
+              <div className="p-1 bg-gradient-to-r from-neon-blue to-neon-purple rounded-lg">
+                <Plane className="w-4 h-4 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold bg-gradient-to-r from-neon-blue to-neon-purple bg-clip-text text-transparent">
+                <h1 className="text-lg font-bold bg-gradient-to-r from-neon-blue to-neon-purple bg-clip-text text-transparent">
                   AVIATOR
                 </h1>
-                <p className="text-gray-400 text-xs">Crypto Crash Game</p>
               </div>
             </div>
             
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 text-neon-green">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1 text-neon-green">
                 <Coins className="w-4 h-4" />
-                <span className="font-bold text-base">${balance.toFixed(2)}</span>
+                <span className="font-bold text-sm">${balance.toFixed(2)}</span>
               </div>
               
-              <div className="flex items-center gap-2 text-neon-purple">
-                <Zap className="w-4 h-4" />
+              <div className="flex items-center gap-1 text-neon-purple">
+                <Zap className="w-3 h-3" />
                 <span className="font-semibold text-xs">
                   {gameHistory.length > 0 
-                    ? `${((gameHistory.filter(g => !g.crashed).length / gameHistory.length) * 100).toFixed(0)}% Win Rate`
-                    : 'New Player'
+                    ? `${((gameHistory.filter(g => !g.crashed).length / gameHistory.length) * 100).toFixed(0)}%`
+                    : 'New'
                   }
                 </span>
               </div>
@@ -154,11 +153,11 @@ const Index = () => {
         </div>
       </header>
 
-      {/* Main Content - Fixed height with proper overflow */}
-      <main className="relative z-10 container mx-auto px-4 py-2 flex-1 min-h-0">
-        <div className="grid lg:grid-cols-4 gap-3 h-full">
-          {/* Game Area - Optimized height */}
-          <div className="lg:col-span-2 flex flex-col gap-3 h-full min-h-0">
+      {/* Main Content - Tight layout */}
+      <main className="relative z-10 flex-1 p-2 overflow-hidden">
+        <div className="h-full grid grid-cols-1 lg:grid-cols-12 gap-2">
+          {/* Game Area */}
+          <div className="lg:col-span-8 flex flex-col gap-2 h-full">
             <div className="flex-1 min-h-0">
               <AviatorGame
                 onMultiplierChange={setCurrentMultiplier}
@@ -180,9 +179,9 @@ const Index = () => {
             </div>
           </div>
 
-          {/* Side Panels - Compact with scroll */}
-          <div className="flex flex-col gap-3 h-full min-h-0">
-            <div className="flex-shrink-0">
+          {/* Side Panels */}
+          <div className="lg:col-span-4 flex flex-col lg:grid lg:grid-rows-2 gap-2 h-full overflow-hidden">
+            <div className="min-h-0">
               <PlayerStats
                 balance={balance}
                 totalWagered={totalWagered}
@@ -192,10 +191,8 @@ const Index = () => {
                 onWithdraw={handleWithdraw}
               />
             </div>
-          </div>
 
-          <div className="flex flex-col gap-3 h-full min-h-0">
-            <div className="flex-1 min-h-0 overflow-hidden">
+            <div className="min-h-0 overflow-hidden">
               <GameHistory history={gameHistory} />
             </div>
           </div>

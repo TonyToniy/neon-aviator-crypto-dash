@@ -22,9 +22,8 @@ const BettingPanel: React.FC<BettingPanelProps> = ({
   potentialWin
 }) => {
   const [betAmount, setBetAmount] = useState(10);
-  const [autoCashOut, setAutoCashOut] = useState(2.0);
 
-  const quickBetAmounts = [10, 25, 50, 100, 250];
+  const quickBetAmounts = [10, 25, 50, 100];
 
   const handleBetAmountChange = (amount: number) => {
     setBetAmount(Math.min(amount, balance));
@@ -37,29 +36,29 @@ const BettingPanel: React.FC<BettingPanelProps> = ({
   };
 
   return (
-    <div className="glass-effect rounded-2xl p-4 border border-neon-blue/30">
-      <div className="flex items-center gap-3 mb-4">
-        <div className="p-1.5 bg-gradient-to-r from-neon-blue to-neon-purple rounded-lg">
-          <Bitcoin className="w-5 h-5 text-white" />
+    <div className="glass-effect rounded-xl p-3 border border-neon-blue/30">
+      <div className="flex items-center gap-2 mb-3">
+        <div className="p-1 bg-gradient-to-r from-neon-blue to-neon-purple rounded-lg">
+          <Bitcoin className="w-4 h-4 text-white" />
         </div>
         <div>
-          <h3 className="text-lg font-bold text-white">Place Your Bet</h3>
+          <h3 className="text-base font-bold text-white">Place Bet</h3>
           <p className="text-gray-400 text-xs">Balance: ${balance.toFixed(2)}</p>
         </div>
       </div>
 
       {/* Current Game Stats */}
       {isPlaying && (
-        <div className="bg-gradient-to-r from-neon-green/10 to-emerald-500/10 rounded-xl p-3 mb-4 border border-neon-green/30">
+        <div className="bg-gradient-to-r from-neon-green/10 to-emerald-500/10 rounded-lg p-2 mb-3 border border-neon-green/30">
           <div className="flex justify-between items-center mb-1">
-            <span className="text-gray-300 text-sm">Current Multiplier:</span>
-            <span className="text-neon-green font-bold text-lg">
+            <span className="text-gray-300 text-xs">Multiplier:</span>
+            <span className="text-neon-green font-bold text-sm">
               {currentMultiplier.toFixed(2)}x
             </span>
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-gray-300 text-sm">Potential Win:</span>
-            <span className="text-neon-green font-bold text-lg">
+            <span className="text-gray-300 text-xs">Win:</span>
+            <span className="text-neon-green font-bold text-sm">
               ${potentialWin.toFixed(2)}
             </span>
           </div>
@@ -69,8 +68,8 @@ const BettingPanel: React.FC<BettingPanelProps> = ({
       {/* Bet Amount Section */}
       {!isPlaying && (
         <>
-          <div className="mb-3">
-            <label className="block text-sm font-medium text-gray-300 mb-2">
+          <div className="mb-2">
+            <label className="block text-xs font-medium text-gray-300 mb-1">
               Bet Amount ($)
             </label>
             <div className="relative">
@@ -78,16 +77,16 @@ const BettingPanel: React.FC<BettingPanelProps> = ({
                 type="number"
                 value={betAmount}
                 onChange={(e) => handleBetAmountChange(Number(e.target.value))}
-                className="bg-slate-800/50 border-neon-blue/30 text-white pr-16 text-lg font-semibold"
+                className="bg-slate-800/50 border-neon-blue/30 text-white pr-12 text-sm font-semibold h-8"
                 min="1"
                 max={balance}
               />
-              <DollarSign className="absolute right-3 top-1/2 transform -translate-y-1/2 text-neon-green w-5 h-5" />
+              <DollarSign className="absolute right-2 top-1/2 transform -translate-y-1/2 text-neon-green w-4 h-4" />
             </div>
           </div>
 
           {/* Quick Bet Buttons */}
-          <div className="grid grid-cols-5 gap-1 mb-4">
+          <div className="grid grid-cols-4 gap-1 mb-3">
             {quickBetAmounts.map((amount) => (
               <Button
                 key={amount}
@@ -95,7 +94,7 @@ const BettingPanel: React.FC<BettingPanelProps> = ({
                 size="sm"
                 onClick={() => handleBetAmountChange(amount)}
                 disabled={amount > balance}
-                className="border-neon-blue/30 text-neon-blue hover:bg-neon-blue/10 hover:border-neon-blue/50 transition-all duration-200 text-xs p-1"
+                className="border-neon-blue/30 text-neon-blue hover:bg-neon-blue/10 hover:border-neon-blue/50 transition-all duration-200 text-xs py-1 h-6"
               >
                 ${amount}
               </Button>
@@ -105,20 +104,20 @@ const BettingPanel: React.FC<BettingPanelProps> = ({
       )}
 
       {/* Action Buttons */}
-      <div className="space-y-2">
+      <div className="space-y-1">
         {!isPlaying ? (
           <Button
             onClick={handlePlaceBet}
             disabled={betAmount <= 0 || betAmount > balance}
-            className="w-full bg-gradient-to-r from-neon-blue to-neon-purple hover:from-neon-purple hover:to-neon-pink text-white font-bold py-3 rounded-xl neon-glow transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-gradient-to-r from-neon-blue to-neon-purple hover:from-neon-purple hover:to-neon-pink text-white font-bold py-2 rounded-lg neon-glow transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
           >
-            <Zap className="w-4 h-4 mr-2" />
+            <Zap className="w-3 h-3 mr-1" />
             PLACE BET ${betAmount}
           </Button>
         ) : (
           <Button
             onClick={onCashOut}
-            className="w-full bg-gradient-to-r from-neon-green to-emerald-500 hover:from-emerald-500 hover:to-neon-green text-white font-bold py-3 rounded-xl neon-glow transition-all duration-300 hover:scale-105 animate-pulse"
+            className="w-full bg-gradient-to-r from-neon-green to-emerald-500 hover:from-emerald-500 hover:to-neon-green text-white font-bold py-2 rounded-lg neon-glow transition-all duration-300 hover:scale-105 animate-pulse text-sm"
           >
             CASH OUT ${potentialWin.toFixed(2)}
           </Button>
@@ -129,7 +128,7 @@ const BettingPanel: React.FC<BettingPanelProps> = ({
           <Button
             onClick={() => handleBetAmountChange(balance)}
             variant="outline"
-            className="w-full border-neon-orange/30 text-neon-orange hover:bg-neon-orange/10 hover:border-neon-orange/50 text-sm py-2"
+            className="w-full border-neon-orange/30 text-neon-orange hover:bg-neon-orange/10 hover:border-neon-orange/50 text-xs py-1 h-6"
             disabled={balance <= 0}
           >
             MAX BET

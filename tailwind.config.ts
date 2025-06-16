@@ -92,66 +92,31 @@ export default {
 						height: '0'
 					}
 				},
-				'plane-curve-flight': {
+				'smooth-curve-flight': {
 					'0%': {
-						left: '-5%',
-						bottom: '10%',
+						left: '5%',
+						bottom: '15%',
 						transform: 'rotate(15deg) scale(1)'
 					},
 					'25%': {
-						left: '25%',
-						bottom: '30%',
+						left: '30%',
+						bottom: '40%',
 						transform: 'rotate(10deg) scale(1.1)'
 					},
 					'50%': {
-						left: '50%',
+						left: '55%',
 						bottom: '60%',
 						transform: 'rotate(5deg) scale(1.2)'
 					},
 					'75%': {
 						left: '75%',
-						bottom: '80%',
+						bottom: '75%',
 						transform: 'rotate(0deg) scale(1.1)'
 					},
 					'100%': {
-						left: '105%',
-						bottom: '90%',
-						transform: 'rotate(-10deg) scale(1)'
-					}
-				},
-				'plane-fly': {
-					'0%': {
-						transform: 'translateX(-100px) translateY(50px) rotate(0deg)'
-					},
-					'100%': {
-						transform: 'translateX(calc(100vw + 100px)) translateY(-100px) rotate(-15deg)'
-					}
-				},
-				'curved-flight': {
-					'0%': {
-						left: '-10%',
-						bottom: '20%',
-						transform: 'rotate(15deg)'
-					},
-					'25%': {
-						left: '25%',
-						bottom: '40%',
-						transform: 'rotate(10deg)'
-					},
-					'50%': {
-						left: '50%',
-						bottom: '60%',
-						transform: 'rotate(5deg)'
-					},
-					'75%': {
-						left: '75%',
-						bottom: '75%',
-						transform: 'rotate(0deg)'
-					},
-					'100%': {
-						left: '110%',
+						left: '95%',
 						bottom: '85%',
-						transform: 'rotate(-5deg)'
+						transform: 'rotate(-5deg) scale(1)'
 					}
 				},
 				'glow-pulse': {
@@ -192,9 +157,7 @@ export default {
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out',
-				'plane-curve-flight': 'plane-curve-flight var(--duration) ease-out',
-				'plane-fly': 'plane-fly var(--duration) linear',
-				'curved-flight': 'curved-flight var(--duration) ease-out',
+				'smooth-curve-flight': 'smooth-curve-flight var(--duration) ease-out',
 				'glow-pulse': 'glow-pulse 2s ease-in-out infinite',
 				'number-glow': 'number-glow 1s ease-in-out infinite',
 				'float': 'float 3s ease-in-out infinite',
