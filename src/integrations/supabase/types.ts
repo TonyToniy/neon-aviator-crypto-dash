@@ -9,7 +9,93 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      crypto_deposits: {
+        Row: {
+          address: string
+          amount: number
+          block_height: number | null
+          confirmations: number | null
+          confirmed_at: string | null
+          created_at: string | null
+          credited_at: string | null
+          currency: string
+          id: string
+          status: string | null
+          tx_hash: string | null
+          user_id: string
+        }
+        Insert: {
+          address: string
+          amount: number
+          block_height?: number | null
+          confirmations?: number | null
+          confirmed_at?: string | null
+          created_at?: string | null
+          credited_at?: string | null
+          currency?: string
+          id?: string
+          status?: string | null
+          tx_hash?: string | null
+          user_id: string
+        }
+        Update: {
+          address?: string
+          amount?: number
+          block_height?: number | null
+          confirmations?: number | null
+          confirmed_at?: string | null
+          created_at?: string | null
+          credited_at?: string | null
+          currency?: string
+          id?: string
+          status?: string | null
+          tx_hash?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      user_balances: {
+        Row: {
+          balance: number | null
+          id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          balance?: number | null
+          id?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          balance?: number | null
+          id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

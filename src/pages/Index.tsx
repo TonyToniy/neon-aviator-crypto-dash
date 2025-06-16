@@ -1,10 +1,23 @@
+
 import React, { useState, useEffect } from 'react';
-import { Plane, Zap, Coins } from 'lucide-react';
+import { Navigate } from 'react-router-dom';
+import { Plane, Zap, Coins, LogOut, Settings } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import AviatorGame from '@/components/AviatorGame';
 import BettingPanel from '@/components/BettingPanel';
 import GameHistory from '@/components/GameHistory';
 import PlayerStats from '@/components/PlayerStats';
+import CryptoDeposit from '@/components/CryptoDeposit';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 
 interface GameRecord {
   id: number;
@@ -16,18 +29,74 @@ interface GameRecord {
 }
 
 const Index = () => {
-  const [balance, setBalance] = useState(1000);
+  const { user, loading, signOut } = useAuth();
+  const [balance, setBalance] = useState(0);
   const [currentMultiplier, setCurrentMultiplier] = useState(1.0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentBet, setCurrentBet] = useState(0);
   const [gameHistory, setGameHistory] = useState<GameRecord[]>([]);
   const [totalWagered, setTotalWagered] = useState(0);
   const [totalWon, setTotalWon] = useState(0);
+  const [showDeposit, setShowDeposit] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const { toast } = useToast();
 
-  const handlePlaceBet = (amount: number) => {
+  // Redirect to auth if not authenticated
+  if (loading) {
+    return (
+      <div className="h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+        <div className="animate-spin">
+          <Plane className="w-8 h-8 text-neon-blue" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/auth" replace />;
+  }
+
+  // Fetch user balance from database
+  const fetchBalance = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('user_balances')
+        .select('balance')
+        .eq('user_id', user.id)
+        .single();
+
+      if (error) throw error;
+      setBalance(Number(data.balance) || 0);
+    } catch (error) {
+      console.error('Error fetching balance:', error);
+    }
+  };
+
+  // Update balance in database
+  const updateBalance = async (newBalance: number) => {
+    try {
+      const { error } = await supabase
+        .from('user_balances')
+        .update({ balance: newBalance, updated_at: new Date().toISOString() })
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error updating balance:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+      fetchBalance();
+    }
+  }, [user]);
+
+  const handlePlaceBet = async (amount: number) => {
     if (amount <= balance) {
-      setBalance(prev => prev - amount);
+      const newBalance = balance - amount;
+      setBalance(newBalance);
+      await updateBalance(newBalance);
       setCurrentBet(amount);
       setIsPlaying(true);
       setTotalWagered(prev => prev + amount);
@@ -39,10 +108,12 @@ const Index = () => {
     }
   };
 
-  const handleCashOut = () => {
+  const handleCashOut = async () => {
     if (isPlaying && currentBet > 0) {
       const winAmount = currentBet * currentMultiplier;
-      setBalance(prev => prev + winAmount);
+      const newBalance = balance + winAmount;
+      setBalance(newBalance);
+      await updateBalance(newBalance);
       setTotalWon(prev => prev + winAmount);
       
       const gameRecord: GameRecord = {
@@ -94,21 +165,32 @@ const Index = () => {
   };
 
   const handleDeposit = () => {
-    setBalance(prev => prev + 500);
-    toast({
-      title: "Deposit Successful! 💳",
-      description: "Added $500 to your balance",
-    });
+    setShowDeposit(true);
   };
 
   const handleWithdraw = () => {
-    if (balance >= 100) {
-      setBalance(prev => prev - 100);
-      toast({
-        title: "Withdrawal Successful! 🏦",
-        description: "Withdrew $100 from your balance",
-      });
-    }
+    // In production, implement proper withdrawal logic
+    toast({
+      title: "Withdrawal Request",
+      description: "Withdrawal functionality coming soon",
+    });
+  };
+
+  const handleDepositSuccess = () => {
+    fetchBalance();
+    setShowDeposit(false);
+    toast({
+      title: "Deposit Successful! 💰",
+      description: "Your account has been credited",
+    });
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+    toast({
+      title: "Signed Out",
+      description: "See you next time!",
+    });
   };
 
   const potentialWin = currentBet * currentMultiplier;
@@ -148,6 +230,32 @@ const Index = () => {
                   }
                 </span>
               </div>
+
+              <Dialog open={showSettings} onOpenChange={setShowSettings}>
+                <DialogTrigger asChild>
+                  <Button variant="ghost" size="sm" className="text-gray-400 hover:text-neon-blue">
+                    <Settings className="w-4 h-4" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="bg-slate-900 border-neon-blue/30">
+                  <DialogHeader>
+                    <DialogTitle className="text-white">Account Settings</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    <div className="text-sm text-gray-300">
+                      <strong>Email:</strong> {user.email}
+                    </div>
+                    <Button
+                      onClick={handleSignOut}
+                      variant="outline"
+                      className="w-full border-red-500/30 text-red-400 hover:bg-red-500/10"
+                    >
+                      <LogOut className="w-4 h-4 mr-2" />
+                      Sign Out
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
           </div>
         </div>
@@ -198,6 +306,19 @@ const Index = () => {
           </div>
         </div>
       </main>
+
+      {/* Crypto Deposit Modal */}
+      <Dialog open={showDeposit} onOpenChange={setShowDeposit}>
+        <DialogContent className="bg-slate-900 border-neon-blue/30 max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-white">Bitcoin Deposit</DialogTitle>
+          </DialogHeader>
+          <CryptoDeposit 
+            userId={user.id} 
+            onDepositSuccess={handleDepositSuccess}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
