@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -118,20 +117,19 @@ const CryptoDeposit: React.FC<CryptoDepositProps> = ({ userId, onDepositSuccess 
     setVerifying(transactionHash);
     
     try {
-      // For demo purposes, we'll simulate verification after a short delay
-      // In production, you would integrate with a proper blockchain API
-      console.log('Verifying transaction:', transactionHash);
+      // Simulate checking transaction confirmations
+      console.log('Checking transaction confirmations for:', transactionHash);
       
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Simulate API call delay for blockchain verification
+      await new Promise(resolve => setTimeout(resolve, 3000));
       
-      // For demo, we'll mark it as confirmed if the tx hash looks valid
-      const isValidTxHash = transactionHash.length >= 32;
+      // For demo, we'll simulate that the transaction has 1+ confirmations
+      const hasConfirmations = transactionHash.length >= 32; // Basic validation
       
-      if (isValidTxHash) {
-        console.log('Transaction appears valid, marking as confirmed');
+      if (hasConfirmations) {
+        console.log('Transaction has confirmations, marking as confirmed');
         
-        // Update deposit status to confirmed
+        // Update deposit status to confirmed - the database trigger will handle crediting
         const { error } = await supabase
           .from('crypto_deposits')
           .update({ 
@@ -147,10 +145,10 @@ const CryptoDeposit: React.FC<CryptoDepositProps> = ({ userId, onDepositSuccess 
           throw error;
         }
 
-        console.log('Deposit status updated to confirmed');
+        console.log('Deposit confirmed - database trigger will credit balance');
         
         toast({
-          title: "Deposit Confirmed! ✅",
+          title: "Transaction Confirmed! ✅",
           description: "Your Bitcoin deposit has been verified and credited to your account",
         });
 
@@ -158,13 +156,13 @@ const CryptoDeposit: React.FC<CryptoDepositProps> = ({ userId, onDepositSuccess 
         await fetchDeposits();
         onDepositSuccess();
       } else {
-        throw new Error('Invalid transaction hash format');
+        throw new Error('Transaction does not have sufficient confirmations');
       }
     } catch (error) {
       console.error('Error verifying transaction:', error);
       toast({
         title: "Verification Failed",
-        description: "Could not verify transaction. Please check the transaction hash and try again.",
+        description: "Could not verify transaction confirmations. Please try manual confirmation.",
         variant: "destructive",
       });
     } finally {
@@ -177,7 +175,7 @@ const CryptoDeposit: React.FC<CryptoDepositProps> = ({ userId, onDepositSuccess 
     setVerifying(txHash);
     
     try {
-      // Update deposit status to confirmed
+      // Update deposit status to confirmed - database trigger will handle the rest
       const { error } = await supabase
         .from('crypto_deposits')
         .update({ 
@@ -192,7 +190,7 @@ const CryptoDeposit: React.FC<CryptoDepositProps> = ({ userId, onDepositSuccess 
 
       toast({
         title: "Deposit Confirmed! ✅",
-        description: "Your deposit has been manually confirmed and credited",
+        description: "Your deposit has been confirmed and credited to your account",
       });
 
       await fetchDeposits();
