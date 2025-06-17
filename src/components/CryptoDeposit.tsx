@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { supabase } from '@/integrations/supabase/client';
+import { api, type DepositResponse } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { Bitcoin, Copy, ExternalLink, CheckCircle, Clock } from 'lucide-react';
 
@@ -11,21 +11,11 @@ interface CryptoDepositProps {
   onDepositSuccess: () => void;
 }
 
-interface Deposit {
-  id: string;
-  address: string;
-  amount: number;
-  tx_hash: string | null;
-  confirmations: number;
-  status: string;
-  created_at: string;
-}
-
 const CryptoDeposit: React.FC<CryptoDepositProps> = ({ userId, onDepositSuccess }) => {
   const [depositAddress, setDepositAddress] = useState('');
   const [amount, setAmount] = useState('');
   const [txHash, setTxHash] = useState('');
-  const [deposits, setDeposits] = useState<Deposit[]>([]);
+  const [deposits, setDeposits] = useState<DepositResponse[]>([]);
   const [loading, setLoading] = useState(false);
   const [verifying, setVerifying] = useState<string | null>(null);
   const { toast } = useToast();
@@ -44,13 +34,9 @@ const CryptoDeposit: React.FC<CryptoDepositProps> = ({ userId, onDepositSuccess 
 
   const fetchDeposits = async () => {
     try {
-      const { data, error } = await supabase
-        .from('crypto_deposits')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false });
+      const { data, error } = await api.getCryptoDeposits(userId);
 
-      if (error) throw error;
+      if (error) throw new Error(error);
       setDeposits(data || []);
     } catch (error) {
       console.error('Error fetching deposits:', error);
@@ -77,17 +63,14 @@ const CryptoDeposit: React.FC<CryptoDepositProps> = ({ userId, onDepositSuccess 
 
     setLoading(true);
     try {
-      const { error } = await supabase
-        .from('crypto_deposits')
-        .insert({
-          user_id: userId,
-          address: depositAddress,
-          amount: parseFloat(amount),
-          tx_hash: txHash,
-          currency: 'BTC'
-        });
+      const { error } = await api.createCryptoDeposit(userId, {
+        address: depositAddress,
+        amount: parseFloat(amount),
+        tx_hash: txHash,
+        currency: 'BTC'
+      });
 
-      if (error) throw error;
+      if (error) throw new Error(error);
 
       toast({
         title: "Deposit Submitted! ⏳",
@@ -128,22 +111,15 @@ const CryptoDeposit: React.FC<CryptoDepositProps> = ({ userId, onDepositSuccess 
       if (hasConfirmations) {
         console.log('Transaction has confirmations, marking as confirmed');
         
-        // Update deposit status to confirmed - the database trigger will handle crediting
-        const { error } = await supabase
-          .from('crypto_deposits')
-          .update({ 
-            status: 'confirmed',
-            confirmations: 1,
-            confirmed_at: new Date().toISOString()
-          })
-          .eq('tx_hash', transactionHash);
+        // Update deposit status to confirmed
+        const { error } = await api.updateDepositStatus(transactionHash, 'confirmed', 1);
 
         if (error) {
           console.error('Error updating deposit status:', error);
-          throw error;
+          throw new Error(error);
         }
 
-        console.log('Deposit confirmed - database trigger will credit balance');
+        console.log('Deposit confirmed - backend will credit balance');
         
         toast({
           title: "Transaction Confirmed! ✅",
@@ -173,17 +149,10 @@ const CryptoDeposit: React.FC<CryptoDepositProps> = ({ userId, onDepositSuccess 
     setVerifying(txHash);
     
     try {
-      // Update deposit status to confirmed - database trigger will handle the rest
-      const { error } = await supabase
-        .from('crypto_deposits')
-        .update({ 
-          status: 'confirmed',
-          confirmations: 1,
-          confirmed_at: new Date().toISOString()
-        })
-        .eq('tx_hash', txHash);
+      // Update deposit status to confirmed
+      const { error } = await api.updateDepositStatus(txHash, 'confirmed', 1);
 
-      if (error) throw error;
+      if (error) throw new Error(error);
 
       toast({
         title: "Deposit Confirmed! ✅",

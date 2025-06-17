@@ -1,9 +1,8 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { supabase } from '@/integrations/supabase/client';
+import { api } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { Eye, EyeOff, User, Lock, Mail } from 'lucide-react';
 
@@ -38,19 +37,16 @@ const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
     try {
       if (isLogin) {
         console.log('Attempting sign in...');
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
+        const { user, session, error } = await api.signInWithPassword(email, password);
 
-        console.log('Sign in response:', { data: !!data, error: error?.message });
+        console.log('Sign in response:', { user: !!user, session: !!session, error });
 
         if (error) {
           console.error('Sign in error:', error);
           
           toast({
             title: "Login Failed",
-            description: error.message,
+            description: error,
             variant: "destructive",
           });
         } else {
@@ -60,6 +56,8 @@ const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
             description: "Successfully logged in",
           });
           onSuccess();
+          // Refresh the page to update auth state
+          window.location.reload();
         }
       } else {
         if (!validatePassword(password)) {
@@ -72,17 +70,14 @@ const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
         }
 
         console.log('Attempting sign up...');
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-        });
+        const { user, session, error } = await api.signUp(email, password);
 
-        console.log('Sign up response:', { data: !!data, error: error?.message });
+        console.log('Sign up response:', { user: !!user, session: !!session, error });
 
         if (error) {
           console.error('Sign up error:', error);
           
-          if (error.message.includes('already registered')) {
+          if (error.includes('already exists')) {
             toast({
               title: "Account Exists",
               description: "An account with this email already exists. Please sign in instead.",
@@ -92,7 +87,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
           } else {
             toast({
               title: "Signup Failed",
-              description: error.message,
+              description: error,
               variant: "destructive",
             });
           }
@@ -103,6 +98,8 @@ const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
             description: "Your account has been created successfully",
           });
           onSuccess();
+          // Refresh the page to update auth state
+          window.location.reload();
         }
       }
     } catch (error) {

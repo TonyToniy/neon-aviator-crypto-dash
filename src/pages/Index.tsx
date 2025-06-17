@@ -3,7 +3,7 @@ import { Navigate } from 'react-router-dom';
 import { Plane, Zap, Coins, LogOut, Settings, LogIn } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
+import { api } from '@/lib/api';
 import AviatorGame from '@/components/AviatorGame';
 import BettingPanel from '@/components/BettingPanel';
 import GameHistory from '@/components/GameHistory';
@@ -42,35 +42,28 @@ const Index = () => {
   const [demoBalance, setDemoBalance] = useState(1000);
   const { toast } = useToast();
 
-  // Fetch user balance from database
+  // Fetch user balance from API
   const fetchBalance = async () => {
     if (!user) return;
     
     try {
-      const { data, error } = await supabase
-        .from('user_balances')
-        .select('balance')
-        .eq('user_id', user.id)
-        .single();
+      const { data, error } = await api.getUserBalance(user.id);
 
-      if (error) throw error;
-      setBalance(Number(data.balance) || 0);
+      if (error) throw new Error(error);
+      setBalance(Number(data?.balance) || 0);
     } catch (error) {
       console.error('Error fetching balance:', error);
     }
   };
 
-  // Update balance in database
+  // Update balance via API
   const updateBalance = async (newBalance: number) => {
     if (!user) return;
     
     try {
-      const { error } = await supabase
-        .from('user_balances')
-        .update({ balance: newBalance, updated_at: new Date().toISOString() })
-        .eq('user_id', user.id);
+      const { error } = await api.updateUserBalance(user.id, newBalance);
 
-      if (error) throw error;
+      if (error) throw new Error(error);
     } catch (error) {
       console.error('Error updating balance:', error);
     }

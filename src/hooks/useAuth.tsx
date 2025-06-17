@@ -1,7 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import type { User, Session } from '@supabase/supabase-js';
+import { api, type User, type Session } from '@/lib/api';
 
 interface AuthState {
   user: User | null;
@@ -17,31 +16,39 @@ export const useAuth = () => {
   });
 
   useEffect(() => {
-    // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setAuthState({
-          user: session?.user ?? null,
-          session,
-          loading: false,
-        });
-      }
-    );
-
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    // Check for stored auth on initialization
+    const storedUser = api.getStoredUser();
+    const storedToken = api.getStoredToken();
+    
+    if (storedUser && storedToken) {
+      // Create a basic session object from stored data
+      const session: Session = {
+        user: storedUser,
+        access_token: storedToken,
+        expires_at: Date.now() + 86400000, // 24 hours from now
+      };
+      
       setAuthState({
-        user: session?.user ?? null,
+        user: storedUser,
         session,
         loading: false,
       });
-    });
-
-    return () => subscription.unsubscribe();
+    } else {
+      setAuthState({
+        user: null,
+        session: null,
+        loading: false,
+      });
+    }
   }, []);
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    await api.signOut();
+    setAuthState({
+      user: null,
+      session: null,
+      loading: false,
+    });
   };
 
   return {
