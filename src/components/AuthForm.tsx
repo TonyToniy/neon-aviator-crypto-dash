@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Eye, EyeOff, User, Lock, Mail } from 'lucide-react';
+import { Eye, EyeOff, User, Lock, Mail, AlertCircle } from 'lucide-react';
 
 interface AuthFormProps {
   onSuccess: () => void;
@@ -33,20 +33,43 @@ const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
     e.preventDefault();
     setLoading(true);
 
+    console.log('Starting auth request...', { isLogin, email: email.substring(0, 3) + '***' });
+
     try {
       if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({
+        console.log('Attempting sign in...');
+        const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
 
+        console.log('Sign in response:', { data: !!data, error: error?.message });
+
         if (error) {
-          toast({
-            title: "Login Failed",
-            description: error.message,
-            variant: "destructive",
-          });
+          console.error('Sign in error:', error);
+          
+          // Handle specific error types
+          if (error.message.includes('Invalid login credentials')) {
+            toast({
+              title: "Invalid Credentials",
+              description: "Please check your email and password",
+              variant: "destructive",
+            });
+          } else if (error.message.includes('network')) {
+            toast({
+              title: "Network Error",
+              description: "Unable to connect to authentication service. Please check your connection and try again.",
+              variant: "destructive",
+            });
+          } else {
+            toast({
+              title: "Login Failed",
+              description: error.message,
+              variant: "destructive",
+            });
+          }
         } else {
+          console.log('Sign in successful');
           toast({
             title: "Welcome back! 🎉",
             description: "Successfully logged in",
@@ -63,7 +86,8 @@ const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
           return;
         }
 
-        const { error } = await supabase.auth.signUp({
+        console.log('Attempting sign up...');
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -71,13 +95,34 @@ const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
           }
         });
 
+        console.log('Sign up response:', { data: !!data, error: error?.message });
+
         if (error) {
-          toast({
-            title: "Signup Failed",
-            description: error.message,
-            variant: "destructive",
-          });
+          console.error('Sign up error:', error);
+          
+          // Handle specific error types
+          if (error.message.includes('User already registered')) {
+            toast({
+              title: "Account Exists",
+              description: "An account with this email already exists. Please sign in instead.",
+              variant: "destructive",
+            });
+            setIsLogin(true);
+          } else if (error.message.includes('network')) {
+            toast({
+              title: "Network Error",
+              description: "Unable to connect to authentication service. Please check your connection and try again.",
+              variant: "destructive",
+            });
+          } else {
+            toast({
+              title: "Signup Failed",
+              description: error.message,
+              variant: "destructive",
+            });
+          }
         } else {
+          console.log('Sign up successful');
           toast({
             title: "Account Created! 🎉",
             description: "Please check your email to verify your account",
@@ -86,9 +131,10 @@ const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
         }
       }
     } catch (error) {
+      console.error('Unexpected auth error:', error);
       toast({
-        title: "Error",
-        description: "An unexpected error occurred",
+        title: "Connection Error",
+        description: "Unable to connect to the authentication service. Please check your internet connection and try again.",
         variant: "destructive",
       });
     } finally {
@@ -124,6 +170,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
               className="bg-slate-800/50 border-neon-blue/30 text-white pl-10"
               placeholder="Enter your email"
               required
+              disabled={loading}
             />
             <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-neon-blue w-4 h-4" />
           </div>
@@ -140,12 +187,14 @@ const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
               className="bg-slate-800/50 border-neon-blue/30 text-white pl-10 pr-10"
               placeholder={isLogin ? 'Enter password' : 'Create strong password'}
               required
+              disabled={loading}
             />
             <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-neon-blue w-4 h-4" />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
               className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-neon-blue"
+              disabled={loading}
             >
               {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
@@ -160,9 +209,16 @@ const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
         <Button
           type="submit"
           disabled={loading}
-          className="w-full bg-gradient-to-r from-neon-blue to-neon-purple hover:from-neon-purple hover:to-neon-pink text-white font-bold py-3 rounded-lg neon-glow transition-all duration-300"
+          className="w-full bg-gradient-to-r from-neon-blue to-neon-purple hover:from-neon-purple hover:to-neon-pink text-white font-bold py-3 rounded-lg neon-glow transition-all duration-300 disabled:opacity-50"
         >
-          {loading ? 'Processing...' : (isLogin ? 'Sign In' : 'Create Account')}
+          {loading ? (
+            <div className="flex items-center gap-2">
+              <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div>
+              Processing...
+            </div>
+          ) : (
+            isLogin ? 'Sign In' : 'Create Account'
+          )}
         </Button>
 
         <div className="text-center">
@@ -170,11 +226,20 @@ const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
             type="button"
             onClick={() => setIsLogin(!isLogin)}
             className="text-neon-blue hover:text-neon-purple transition-colors text-sm"
+            disabled={loading}
           >
             {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
           </button>
         </div>
       </form>
+
+      {/* Connection status indicator */}
+      <div className="mt-4 text-center">
+        <div className="flex items-center justify-center gap-2 text-xs text-gray-500">
+          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+          <span>Connected to auth service</span>
+        </div>
+      </div>
     </div>
   );
 };
