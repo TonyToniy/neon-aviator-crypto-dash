@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -139,7 +140,6 @@ const CryptoDeposit: React.FC<CryptoDepositProps> = ({ userId, onDepositSuccess 
             confirmed_at: new Date().toISOString()
           })
           .eq('tx_hash', transactionHash)
-          .eq('user_id', userId)
           .execute();
 
         if (error) {
@@ -186,7 +186,6 @@ const CryptoDeposit: React.FC<CryptoDepositProps> = ({ userId, onDepositSuccess 
           confirmed_at: new Date().toISOString()
         })
         .eq('tx_hash', txHash)
-        .eq('user_id', userId)
         .execute();
 
       if (error) throw error;
