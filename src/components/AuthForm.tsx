@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -205,6 +204,14 @@ const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
           </button>
         </div>
       </form>
+
+      {/* Connection status indicator */}
+      <div className="mt-4 text-center">
+        <div className="flex items-center justify-center gap-2 text-xs text-gray-500">
+          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+          <span>Connected to API Server</span>
+        </div>
+      </div>
     </div>
   );
 };

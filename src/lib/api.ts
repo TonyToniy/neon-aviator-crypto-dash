@@ -52,58 +52,86 @@ class ApiClient {
     }
 
     try {
+      console.log(`Making API request to: ${url}`);
+      
       const response = await fetch(url, {
         ...options,
         headers,
       });
 
-      const data = await response.json();
+      console.log(`API response status: ${response.status}`);
 
       if (!response.ok) {
-        return { error: data.message || `HTTP ${response.status}` };
+        const errorText = await response.text();
+        console.error(`API error response: ${errorText}`);
+        
+        try {
+          const errorData = JSON.parse(errorText);
+          return { error: errorData.message || `HTTP ${response.status}` };
+        } catch {
+          return { error: errorText || `HTTP ${response.status}` };
+        }
       }
+
+      const data = await response.json();
+      console.log('API success response:', data);
 
       return { data };
     } catch (error) {
-      return { error: 'Network error' };
+      console.error('Network error:', error);
+      return { error: 'Network error: Unable to connect to server' };
     }
   }
 
   // Auth methods
   async signInWithPassword(email: string, password: string): Promise<AuthResponse> {
-    const result = await this.request<{ user: User; session: Session }>('/auth/login', {
+    const result = await this.request<{ user: User; token: string }>('/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     });
 
-    if (result.data?.session) {
-      this.token = result.data.session.access_token;
+    if (result.data?.token) {
+      this.token = result.data.token;
       localStorage.setItem('auth_token', this.token);
       localStorage.setItem('user', JSON.stringify(result.data.user));
+      
+      return {
+        user: result.data.user,
+        session: {
+          user: result.data.user,
+          access_token: result.data.token,
+          expires_at: Date.now() + 86400000, // 24 hours
+        },
+      };
     }
 
     return {
-      user: result.data?.user,
-      session: result.data?.session,
       error: result.error,
     };
   }
 
   async signUp(email: string, password: string): Promise<AuthResponse> {
-    const result = await this.request<{ user: User; session: Session }>('/auth/register', {
+    const result = await this.request<{ user: User; token: string }>('/auth/register', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     });
 
-    if (result.data?.session) {
-      this.token = result.data.session.access_token;
+    if (result.data?.token) {
+      this.token = result.data.token;
       localStorage.setItem('auth_token', this.token);
       localStorage.setItem('user', JSON.stringify(result.data.user));
+      
+      return {
+        user: result.data.user,
+        session: {
+          user: result.data.user,
+          access_token: result.data.token,
+          expires_at: Date.now() + 86400000, // 24 hours
+        },
+      };
     }
 
     return {
-      user: result.data?.user,
-      session: result.data?.session,
       error: result.error,
     };
   }
