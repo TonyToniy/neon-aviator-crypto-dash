@@ -2,7 +2,7 @@
 server {
     listen 8097;
     server_name your-domain.com www.your-domain.com;  # Replace with your domain or server IP
-    root /var/www/site97/dist;
+    root /var/www/site97;
     index index.html;
 
     # Gzip compression
@@ -11,13 +11,16 @@ server {
     gzip_min_length 1024;
     gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
 
-    # Handle React Router (SPA routing)
+    # Handle React Router (SPA routing) - this is crucial for /auth route
     location / {
         try_files $uri $uri/ /index.html;
+        add_header Cache-Control "no-cache, no-store, must-revalidate";
+        add_header Pragma "no-cache";
+        add_header Expires "0";
     }
 
-    # Cache static assets
-    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg)$ {
+    # Cache static assets (but not the main index.html)
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
         expires 1y;
         add_header Cache-Control "public, immutable";
     }
@@ -26,4 +29,13 @@ server {
     add_header X-Frame-Options "SAMEORIGIN" always;
     add_header X-Content-Type-Options "nosniff" always;
     add_header X-XSS-Protection "1; mode=block" always;
+    
+    # Ensure proper MIME types
+    location ~* \.js$ {
+        add_header Content-Type application/javascript;
+    }
+    
+    location ~* \.css$ {
+        add_header Content-Type text/css;
+    }
 }
