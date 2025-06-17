@@ -1,8 +1,9 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { db } from '@/integrations/postgresql/client';
+import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Eye, EyeOff, User, Lock, Mail } from 'lucide-react';
 
@@ -37,7 +38,10 @@ const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
     try {
       if (isLogin) {
         console.log('Attempting sign in...');
-        const { data, error } = await db.auth.signIn(email, password);
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
 
         console.log('Sign in response:', { data: !!data, error: error?.message });
 
@@ -68,14 +72,17 @@ const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
         }
 
         console.log('Attempting sign up...');
-        const { data, error } = await db.auth.signUp(email, password);
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+        });
 
         console.log('Sign up response:', { data: !!data, error: error?.message });
 
         if (error) {
           console.error('Sign up error:', error);
           
-          if (error.message.includes('already exists')) {
+          if (error.message.includes('already registered')) {
             toast({
               title: "Account Exists",
               description: "An account with this email already exists. Please sign in instead.",
@@ -95,14 +102,14 @@ const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
             title: "Account Created! 🎉",
             description: "Your account has been created successfully",
           });
-          setIsLogin(true);
+          onSuccess();
         }
       }
     } catch (error) {
       console.error('Unexpected auth error:', error);
       toast({
         title: "Connection Error",
-        description: "Unable to connect to the database. Please try again.",
+        description: "Unable to connect to the authentication service. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -205,7 +212,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
       <div className="mt-4 text-center">
         <div className="flex items-center justify-center gap-2 text-xs text-gray-500">
           <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-          <span>Connected to auth service</span>
+          <span>Connected to Supabase</span>
         </div>
       </div>
     </div>

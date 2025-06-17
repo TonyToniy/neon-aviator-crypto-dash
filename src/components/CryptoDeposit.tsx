@@ -3,12 +3,12 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { db } from '@/integrations/postgresql/client';
+import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Bitcoin, Copy, ExternalLink, CheckCircle, Clock } from 'lucide-react';
 
 interface CryptoDepositProps {
-  userId: number;
+  userId: string;
   onDepositSuccess: () => void;
 }
 
@@ -45,12 +45,11 @@ const CryptoDeposit: React.FC<CryptoDepositProps> = ({ userId, onDepositSuccess 
 
   const fetchDeposits = async () => {
     try {
-      const { data, error } = await db
+      const { data, error } = await supabase
         .from('crypto_deposits')
         .select('*')
-        .order('created_at', { ascending: false })
         .eq('user_id', userId)
-        .execute();
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
       setDeposits(data || []);
@@ -79,7 +78,7 @@ const CryptoDeposit: React.FC<CryptoDepositProps> = ({ userId, onDepositSuccess 
 
     setLoading(true);
     try {
-      const { error } = await db
+      const { error } = await supabase
         .from('crypto_deposits')
         .insert({
           user_id: userId,
@@ -87,8 +86,7 @@ const CryptoDeposit: React.FC<CryptoDepositProps> = ({ userId, onDepositSuccess 
           amount: parseFloat(amount),
           tx_hash: txHash,
           currency: 'BTC'
-        })
-        .execute();
+        });
 
       if (error) throw error;
 
@@ -132,15 +130,14 @@ const CryptoDeposit: React.FC<CryptoDepositProps> = ({ userId, onDepositSuccess 
         console.log('Transaction has confirmations, marking as confirmed');
         
         // Update deposit status to confirmed - the database trigger will handle crediting
-        const { error } = await db
+        const { error } = await supabase
           .from('crypto_deposits')
           .update({ 
             status: 'confirmed',
             confirmations: 1,
             confirmed_at: new Date().toISOString()
           })
-          .eq('tx_hash', transactionHash)
-          .execute();
+          .eq('tx_hash', transactionHash);
 
         if (error) {
           console.error('Error updating deposit status:', error);
@@ -178,15 +175,14 @@ const CryptoDeposit: React.FC<CryptoDepositProps> = ({ userId, onDepositSuccess 
     
     try {
       // Update deposit status to confirmed - database trigger will handle the rest
-      const { error } = await db
+      const { error } = await supabase
         .from('crypto_deposits')
         .update({ 
           status: 'confirmed',
           confirmations: 1,
           confirmed_at: new Date().toISOString()
         })
-        .eq('tx_hash', txHash)
-        .execute();
+        .eq('tx_hash', txHash);
 
       if (error) throw error;
 
