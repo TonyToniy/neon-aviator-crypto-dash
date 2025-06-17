@@ -3,6 +3,7 @@ interface User {
   id: string;
   email: string;
   created_at: string;
+  balance: number;
 }
 
 interface Session {
@@ -191,6 +192,23 @@ class ApiClient {
       method: 'PUT',
       body: JSON.stringify({ status, confirmations, confirmed_at: new Date().toISOString() }),
     });
+  }
+
+  // Game data methods
+  async saveGameHistory(userId: string, gameData: {
+    multiplier: number;
+    bet_amount: number;
+    payout: number;
+    crashed: boolean;
+  }): Promise<{ error?: string }> {
+    return this.request(`/users/${userId}/games`, {
+      method: 'POST',
+      body: JSON.stringify(gameData),
+    });
+  }
+
+  async getGameHistory(userId: string): Promise<{ data?: any[]; error?: string }> {
+    return this.request<any[]>(`/users/${userId}/games`);
   }
 }
 
