@@ -1,11 +1,10 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { supabase } from '@/integrations/supabase/client';
+import { db } from '@/integrations/postgresql/client';
 import { useToast } from '@/hooks/use-toast';
-import { Eye, EyeOff, User, Lock, Mail, AlertCircle } from 'lucide-react';
+import { Eye, EyeOff, User, Lock, Mail } from 'lucide-react';
 
 interface AuthFormProps {
   onSuccess: () => void;
@@ -38,36 +37,18 @@ const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
     try {
       if (isLogin) {
         console.log('Attempting sign in...');
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
+        const { data, error } = await db.auth.signIn(email, password);
 
         console.log('Sign in response:', { data: !!data, error: error?.message });
 
         if (error) {
           console.error('Sign in error:', error);
           
-          // Handle specific error types
-          if (error.message.includes('Invalid login credentials')) {
-            toast({
-              title: "Invalid Credentials",
-              description: "Please check your email and password",
-              variant: "destructive",
-            });
-          } else if (error.message.includes('network')) {
-            toast({
-              title: "Network Error",
-              description: "Unable to connect to authentication service. Please check your connection and try again.",
-              variant: "destructive",
-            });
-          } else {
-            toast({
-              title: "Login Failed",
-              description: error.message,
-              variant: "destructive",
-            });
-          }
+          toast({
+            title: "Login Failed",
+            description: error.message,
+            variant: "destructive",
+          });
         } else {
           console.log('Sign in successful');
           toast({
@@ -87,33 +68,20 @@ const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
         }
 
         console.log('Attempting sign up...');
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            emailRedirectTo: `${window.location.origin}/`
-          }
-        });
+        const { data, error } = await db.auth.signUp(email, password);
 
         console.log('Sign up response:', { data: !!data, error: error?.message });
 
         if (error) {
           console.error('Sign up error:', error);
           
-          // Handle specific error types
-          if (error.message.includes('User already registered')) {
+          if (error.message.includes('already exists')) {
             toast({
               title: "Account Exists",
               description: "An account with this email already exists. Please sign in instead.",
               variant: "destructive",
             });
             setIsLogin(true);
-          } else if (error.message.includes('network')) {
-            toast({
-              title: "Network Error",
-              description: "Unable to connect to authentication service. Please check your connection and try again.",
-              variant: "destructive",
-            });
           } else {
             toast({
               title: "Signup Failed",
@@ -125,7 +93,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
           console.log('Sign up successful');
           toast({
             title: "Account Created! 🎉",
-            description: "Please check your email to verify your account",
+            description: "Your account has been created successfully",
           });
           setIsLogin(true);
         }
@@ -134,7 +102,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
       console.error('Unexpected auth error:', error);
       toast({
         title: "Connection Error",
-        description: "Unable to connect to the authentication service. Please check your internet connection and try again.",
+        description: "Unable to connect to the database. Please try again.",
         variant: "destructive",
       });
     } finally {

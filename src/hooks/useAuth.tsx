@@ -1,7 +1,16 @@
 
 import { useState, useEffect } from 'react';
-import { User, Session } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
+import { db } from '@/integrations/postgresql/client';
+
+interface User {
+  id: number;
+  email: string;
+  created_at: string;
+}
+
+interface Session {
+  user: User;
+}
 
 interface AuthState {
   user: User | null;
@@ -18,7 +27,7 @@ export const useAuth = () => {
 
   useEffect(() => {
     // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+    const { data: { subscription } } = db.auth.onAuthStateChange(
       (event, session) => {
         setAuthState({
           user: session?.user ?? null,
@@ -29,7 +38,7 @@ export const useAuth = () => {
     );
 
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    db.auth.getSession().then(({ data: { session } }) => {
       setAuthState({
         user: session?.user ?? null,
         session,
@@ -41,7 +50,7 @@ export const useAuth = () => {
   }, []);
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    await db.auth.signOut();
   };
 
   return {
