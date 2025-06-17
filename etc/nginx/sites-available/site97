@@ -11,7 +11,7 @@ server {
     gzip_min_length 1024;
     gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
 
-    # Proxy API requests to the backend server
+    # API endpoints - proxy to Node.js backend
     location /api/ {
         proxy_pass http://localhost:3001;
         proxy_http_version 1.1;
@@ -40,27 +40,27 @@ server {
         }
     }
 
-    # Handle React Router (SPA routing) - this is crucial for /auth route
+    # Handle React Router (SPA routing) - crucial for client-side routing
     location / {
         try_files $uri $uri/ /index.html;
         
-        # Prevent caching for HTML files to ensure fresh content
+        # Prevent caching for HTML files
         add_header Cache-Control "no-cache, no-store, must-revalidate";
         add_header Pragma "no-cache";
         add_header Expires "0";
         
-        # Add security headers
+        # Security headers
         add_header X-Frame-Options "SAMEORIGIN" always;
         add_header X-Content-Type-Options "nosniff" always;
         add_header X-XSS-Protection "1; mode=block" always;
     }
 
-    # Cache static assets (but not the main index.html)
+    # Cache static assets (JS, CSS, images)
     location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
         expires 1y;
         add_header Cache-Control "public, immutable";
         
-        # Ensure proper MIME types for assets
+        # Ensure proper MIME types
         location ~* \.js$ {
             add_header Content-Type "application/javascript";
         }
@@ -70,7 +70,7 @@ server {
         }
     }
 
-    # Specific handling for favicon
+    # Handle favicon
     location = /favicon.ico {
         expires 1y;
         add_header Cache-Control "public, immutable";
@@ -85,4 +85,8 @@ server {
         log_not_found off;
         access_log off;
     }
+
+    # Logging
+    access_log /var/log/nginx/site97.access.log;
+    error_log /var/log/nginx/site97.error.log;
 }
