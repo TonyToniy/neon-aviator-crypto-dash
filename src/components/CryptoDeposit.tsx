@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,7 +12,7 @@ interface CryptoDepositProps {
 }
 
 interface Deposit {
-  id: number;
+  id: string;
   address: string;
   amount: number;
   tx_hash: string | null;

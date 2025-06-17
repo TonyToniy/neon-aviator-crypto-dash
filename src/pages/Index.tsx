@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Plane, Zap, Coins, LogOut, Settings, LogIn } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
-import { db } from '@/integrations/postgresql/client';
+import { supabase } from '@/integrations/supabase/client';
 import AviatorGame from '@/components/AviatorGame';
 import BettingPanel from '@/components/BettingPanel';
 import GameHistory from '@/components/GameHistory';
@@ -48,7 +47,7 @@ const Index = () => {
     if (!user) return;
     
     try {
-      const { data, error } = await db
+      const { data, error } = await supabase
         .from('user_balances')
         .select('balance')
         .eq('user_id', user.id)
@@ -66,11 +65,10 @@ const Index = () => {
     if (!user) return;
     
     try {
-      const { error } = await db
+      const { error } = await supabase
         .from('user_balances')
         .update({ balance: newBalance, updated_at: new Date().toISOString() })
-        .eq('user_id', user.id)
-        .execute();
+        .eq('user_id', user.id);
 
       if (error) throw error;
     } catch (error) {
